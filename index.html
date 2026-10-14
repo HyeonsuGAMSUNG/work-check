@@ -161,9 +161,15 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     '<div class="stat"><b>' + won(L.cpc) + '</b><span>평균 CPC' + (Pv ? ' · 전날 ' + won(Pv.cpc) : '') + '</span></div>' +
     '<div class="stat"><b>' + esc(best ? C[best.campaign].name : '–') + '</b><span>CTR 1위 ' + (best ? best.ctr.toFixed(2) + '% (클릭 20건 이상 중)' : '') + '</span></div></div>';
 
-  r += '<h2>' + dot('var(--accent)') + '소재별 일별 성과 (일본 송세션 메타 트래픽)</h2><div class="list scroll"><table><tr><th>소재</th>' +
+  r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
+    (A.insights || []).map(function(x){ return '<div class="day-h">' + md(x.date) + '</div>' + item(null, x.text); }).join('') + '</div>';
+
+  var products = []; A.campaigns.forEach(function(c){ var k = (c.product || '기타') + ' · ' + (c.channel || ''); if (products.indexOf(k) < 0) products.push(k); });
+  r += products.map(function(pk){
+    var cs = A.campaigns.filter(function(c){ return ((c.product || '기타') + ' · ' + (c.channel || '')) === pk; });
+    return '<h2>' + dot('var(--accent)') + '소재별 일별 성과 · ' + esc(pk) + '</h2><div class="list scroll"><table><tr><th>소재</th>' +
     dates.map(function(d){ return '<th class="num">' + md(d) + '</th>'; }).join('') + '</tr>' +
-    A.campaigns.map(function(c){
+    cs.map(function(c){
       var prevCtr = null;
       return '<tr><td style="min-width:120px"><b>' + esc(c.name) + '</b><div class="sub">' + esc(c.angle) + '</div></td>' + dates.map(function(d){
         var x = A.daily.filter(function(q){ return q.date === d && q.campaign === c.id; })[0];
@@ -174,7 +180,8 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
         return '<td class="num">' + (x.ctr != null ? '<b>' + x.ctr.toFixed(2) + '%</b>' + arrow + '<div class="sub">' + x.clicks + '클릭 · ' + x.cpc + '원</div>' : '<span class="sub">CTR 없음</span>') +
           '<div class="sub">' + won(x.cost) + (x.partial ? ' *' : '') + '</div></td>';
       }).join('') + '</tr>';
-    }).join('') + '</table></div><p class="hint">칸 안: CTR / 클릭 · CPC / 그날 비용. * 표시는 당일 집계 중 캡처.</p>';
+    }).join('') + '</table></div>';
+  }).join('') + '<p class="hint">칸 안: CTR / 클릭 · CPC / 그날 비용. * 표시는 당일 집계 중 캡처.</p>';
 
   r += '<h2>' + dot('var(--accent)') + '일별 광고 액션 · 이유와 결과</h2><div class="list">' +
     W.log.filter(function(g){ return !g.undated; }).map(function(g){
@@ -229,6 +236,16 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   }).join('') + '</div>';
   m += '<h2>' + dot('var(--good)') + '고정 데일리 업무</h2><div class="list scroll"><table><tr><th>업무</th>' + ['월','화','수','목','금'].map(function(d){ return '<th style="text-align:center">' + d + '</th>'; }).join('') + '</tr>' +
     W.fixed.map(function(f){ return '<tr><td><b>' + esc(f.name) + '</b>' + (f.desc ? '<div class="sub">' + esc(f.desc) + '</div>' : '') + '</td>' + ['월','화','수','목','금'].map(function(d){ var y = f.checked.indexOf(d) >= 0; return '<td class="d' + (y ? ' y' : '') + '">' + (y ? '✓' : '·') + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
+  if (W.projects) {
+    var PJ = W.projects.items.slice().sort(function(a,b){ return (a.lecture || a.open || '9') < (b.lecture || b.open || '9') ? -1 : 1; });
+    m += '<h2>' + dot('var(--accent)') + '진행·예정 클래스와 프로젝트</h2><div class="list">' + PJ.map(function(p){
+      var c = [];
+      if (p.open) c.push('<span class="chip">오픈 ' + esc(md(p.open)) + '</span>');
+      if (p.lecture) c.push('<span class="chip">수업 ' + esc(md(p.lecture)) + '</span>');
+      if (p.who) c.push('<span class="chip">' + esc(p.who) + '</span>');
+      return item(null, p.name, p.note, c);
+    }).join('') + '</div><p class="hint">' + esc(W.projects.note) + '</p>';
+  }
   var byDay = {}; W.schedule.forEach(function(e){ (byDay[e.date] = byDay[e.date] || []).push(e); });
   m += '<h2>' + dot('var(--muted-2)') + '다가오는 일정</h2><div class="list">' + Object.keys(byDay).sort().map(function(d){
     return '<div class="day-h">' + md(d) + '</div>' + byDay[d].map(function(e){ return item(null, (e.time ? e.time + ' · ' : '') + e.title); }).join('');
