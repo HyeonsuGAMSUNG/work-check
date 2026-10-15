@@ -119,6 +119,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
 <main class="wrap">
   <section id="s-report"></section>
   <section id="s-remind"></section>
+  <section id="s-daily"></section>
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
@@ -262,18 +263,13 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     return c;
   };
   var GROUPS = [['today','오늘 꼭','var(--bad)'],['week','이번 주 안에','var(--warn)'],['wait','대기 · 급하지 않음','var(--muted-2)']];
-  var fixedLeft = W.fixed.filter(function(f){ return f.checked.indexOf(todayDay) < 0; }).length;
-  var m = '<div class="stats">' + [[W.tasks.length,'미완료'],[W.tasks.filter(function(t){ return t.group === 'today'; }).length,'오늘 꼭'],[W.missing.filter(function(x){ return x.kind === 'check'; }).length,'누락 후보'],[fixedLeft,'고정업무 남음']]
+  var cnt = function(g){ return W.tasks.filter(function(t){ return t.group === g; }).length; };
+  var m = '<div class="stats">' + [[W.tasks.length,'미완료'],[cnt('today'),'오늘 꼭'],[cnt('week'),'이번 주 안에'],[W.missing.filter(function(x){ return x.kind === 'check'; }).length,'누락 후보']]
     .map(function(x){ return '<div class="stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('') + '</div>';
   m += GROUPS.map(function(g){
     var ts = W.tasks.filter(function(t){ return t.group === g[0]; });
     return ts.length ? '<h2>' + dot(g[2]) + g[1] + ' · ' + ts.length + '</h2><div class="list">' + ts.map(function(t){ return item(t.id, t.title, t.note, taskChips(t)); }).join('') + '</div>' : '';
   }).join('');
-  m += '<h2>' + dot('var(--good)') + '일별 내가 한 일</h2><div class="list">' + W.log.map(function(g){
-    return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 노션에 완료 날짜 없음' : md(g.date)) + '</div>' + g.items.map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'], g.undated ? '' : whyRes(a)); }).join('');
-  }).join('') + '</div>';
-  m += '<h2>' + dot('var(--good)') + '고정 데일리 업무</h2><div class="list scroll"><table><tr><th>업무</th>' + ['월','화','수','목','금'].map(function(d){ return '<th style="text-align:center">' + d + '</th>'; }).join('') + '</tr>' +
-    W.fixed.map(function(f){ return '<tr><td><b>' + esc(f.name) + '</b>' + (f.desc ? '<div class="sub">' + esc(f.desc) + '</div>' : '') + '</td>' + ['월','화','수','목','금'].map(function(d){ var y = f.checked.indexOf(d) >= 0; return '<td class="d' + (y ? ' y' : '') + '">' + (y ? '✓' : '·') + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
   if (W.projects) {
     var PJ = W.projects.items.slice().sort(function(a,b){ return (a.lecture || a.open || '9') < (b.lecture || b.open || '9') ? -1 : 1; });
     m += '<h2>' + dot('var(--accent)') + '진행·예정 클래스와 프로젝트</h2><div class="list">' + PJ.map(function(p){
@@ -295,6 +291,28 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   m += '<p class="hint">체크는 이 브라우저에만 남습니다. "완료 목록 복사"로 클로드에게 붙여 넣으면 노션과 사이트에 반영합니다.</p>';
   document.getElementById('s-remind').innerHTML = m;
 
+  /* ---------- 일간 업무: 담당 업무 리스트 + 일별 한 일 ---------- */
+  var WD = ['월','화','수','목','금'], todayIso = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  var todayLog = W.log.filter(function(g){ return g.date === todayIso; })[0];
+  var weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  var weekCount = W.log.filter(function(g){ return !g.undated && new Date(g.date + 'T00:00:00') >= weekStart; }).reduce(function(a,g){ return a + g.items.length; }, 0);
+  var dy = '<div class="stats">' +
+    '<div class="stat"><b>' + W.fixed.filter(function(f){ return f.checked.indexOf(todayDay) >= 0; }).length + ' / ' + W.fixed.length + '</b><span>담당 업무 중 오늘(' + todayDay + ') 한 것</span></div>' +
+    '<div class="stat"><b>' + (todayLog ? todayLog.items.length : 0) + '</b><span>오늘 한 일</span></div>' +
+    '<div class="stat"><b>' + weekCount + '</b><span>이번 주 한 일</span></div></div>';
+  var areas = []; W.fixed.forEach(function(f){ if (areas.indexOf(f.area) < 0) areas.push(f.area); });
+  dy += '<h2>' + dot('var(--accent)') + '담당 업무 · 이번 주 체크</h2><div class="list scroll"><table class="book"><tr><th>세부 업무</th><th>주기</th>' + WD.map(function(d){ return '<th style="text-align:center"' + (d === todayDay ? ' class="up"' : '') + '>' + d + '</th>'; }).join('') + '</tr>' +
+    areas.map(function(a){
+      return '<tr><td class="grp" colspan="' + (WD.length + 2) + '"><b>' + esc(a) + '</b></td></tr>' + W.fixed.filter(function(f){ return f.area === a; }).map(function(f){
+        return '<tr><td style="min-width:190px;max-width:260px"><div class="t" style="font-size:.86rem">' + esc(f.name) + '</div>' + (f.note ? '<div class="sub">' + esc(f.note) + '</div>' : '') + '</td><td class="sub" style="white-space:nowrap">' + esc(f.freq) + '</td>' +
+          WD.map(function(d){ var y = f.checked.indexOf(d) >= 0; return '<td class="d' + (y ? ' y' : '') + '">' + (y ? '✓' : '·') + '</td>'; }).join('') + '</tr>';
+      }).join('');
+    }).join('') + '</table></div><p class="hint">체크는 노션 하루 페이지의 "고정 데일리 업무" 기준.</p>';
+  dy += '<h2>' + dot('var(--good)') + '일별 내가 한 일</h2><div class="list">' + W.log.map(function(g){
+    return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 노션에 완료 날짜 없음' : md(g.date)) + ' · ' + g.items.length + '건</div>' + g.items.map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'], g.undated ? '' : whyRes(a)); }).join('');
+  }).join('') + '</div>';
+  document.getElementById('s-daily').innerHTML = dy;
+
   /* ---------- 광고 마케팅 예정 ---------- */
   var dated = W.plans.filter(function(p){ return p.date; }).sort(function(a,b){ return a.date < b.date ? -1 : 1; }), open = W.plans.filter(function(p){ return !p.date; });
   var planItem = function(p){ return item(null, p.title, p.why, ['<span class="chip">' + esc(p.channel) + '</span>', '<span class="chip' + (p.status === '대기' ? ' old' : '') + '">' + esc(p.status) + '</span>'].concat(p.est ? ['<span class="chip old">날짜 추정</span>'] : [])); };
@@ -307,7 +325,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   document.getElementById('s-plan').innerHTML = pl;
 
   /* ---------- 탭 ---------- */
-  var TABS = [['report','광고 효율 보고서'],['remind','업무 리마인드'],['plan','광고 마케팅 예정']];
+  var TABS = [['report','광고 효율 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['plan','광고 마케팅 예정']];
   var tabs = document.getElementById('tabs');
   tabs.innerHTML = TABS.map(function(t){ return '<button role="tab" type="button" data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
   var show = function(id){
