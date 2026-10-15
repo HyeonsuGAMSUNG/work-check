@@ -213,6 +213,14 @@ window.WORK = {
    "note": "AI 플리반 수강생에게 '7회차 과제 내는 곳'이라고 안내. https://forms.gle/uazzcREnnSAXYJhF7",
    "since": "10/15",
    "due": "10/20"
+  },
+  {
+   "id": "t26",
+   "group": "week",
+   "tag": "광고",
+   "title": "미국 글로벌 오픈 → 미국 광고 집행",
+   "note": "미국 글로벌 오픈함. 광고 세팅·집행 필요 (채널·예산 미정)",
+   "since": "10/15"
   }
  ],
  "doneCount": 31,
@@ -2371,6 +2379,14 @@ window.WORK = {
    "channel": "메타",
    "why": "7일째, 담당부서 5명째 이관 중",
    "status": "대기",
+   "est": false
+  },
+  {
+   "date": "",
+   "title": "미국 글로벌 광고 집행",
+   "channel": "미정",
+   "why": "미국 글로벌 오픈. 비용 시트 미국 칸은 아직 0원",
+   "status": "예정",
    "est": false
   }
  ],
