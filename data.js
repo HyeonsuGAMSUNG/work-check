@@ -204,6 +204,15 @@ window.WORK = {
    "tag": "자동화",
    "title": "클래스 일정도 잔디에서 요청해 조회",
    "since": "10/12"
+  },
+  {
+   "id": "t25",
+   "group": "week",
+   "tag": "수업",
+   "title": "AI 플리반: 10/20(화) 수업 때 7회차 과제 제출 폼 배포",
+   "note": "AI 플리반 수강생에게 '7회차 과제 내는 곳'이라고 안내. https://forms.gle/uazzcREnnSAXYJhF7",
+   "since": "10/15",
+   "due": "10/20"
   }
  ],
  "doneCount": 31,
