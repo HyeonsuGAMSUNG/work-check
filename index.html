@@ -88,6 +88,13 @@ td.d{text-align:center;width:36px;color:var(--muted-2)}
 td.d.y{color:var(--good);font-weight:700}
 .up{color:var(--good)} .down{color:var(--bad)}
 .sub{font-size:.74rem;color:var(--muted)}
+/* 광고비 장부: 첫 칸(캠페인)은 가로 스크롤해도 고정 */
+table.book td:first-child,table.book th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:1px 0 0 var(--border)}
+table.book td.grp{background:var(--chip-bg);font-size:.8rem;position:sticky;left:0}
+table.book td.num{padding-inline:6px}
+.chip.t-tr{background:var(--good-bg);color:var(--good);border-color:transparent}
+.chip.t-ld{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.chip.t-bo{background:var(--bad-bg);color:var(--bad);border-color:transparent}
 details.fold{margin-top:22px}
 details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(--muted);padding:4px 2px}
 .empty{padding:16px 12px;color:var(--muted);font-size:.85rem}
@@ -155,19 +162,56 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   var L = dayAgg(last), Pv = prev ? dayAgg(prev) : null;
   // 클릭 20건 미만은 CTR이 쉽게 튀므로 1위 후보에서 뺀다
   var best = A.daily.filter(function(r){ return r.date === last && r.ctr != null && r.clicks >= 20; }).sort(function(a,b){ return b.ctr - a.ctr; })[0];
+  var B = A.book, M = A.meta14;
+  var sumv = function(v){ return v.reduce(function(a,b){ return a + b; }, 0); };
+  var bySum = function(f){ return B.groups.reduce(function(a,g){ return a + g.rows.reduce(function(x,row){ return x + (f(g, row) ? sumv(row.v) : 0); }, 0); }, 0); };
+  var typeChip = function(x){ var c = x.type === '트래픽' ? 't-tr' : x.type === '잠재고객' ? 't-ld' : 't-bo'; return '<span class="chip ' + c + '">' + esc(x.type + (x.aud ? ' ' + x.aud : '')) + '</span>'; };
+  var dRange = md(B.days[0]).split(' ')[0] + '~' + md(B.days[B.days.length - 1]).split(' ')[0];
   var r = '<div class="stats">' +
+    '<div class="stat"><b>' + won(bySum(function(){ return true; })) + '</b><span>' + dRange + ' 총 광고비</span></div>' +
+    '<div class="stat"><b>' + won(bySum(function(g){ return g.country === '한국'; })) + '</b><span>한국</span></div>' +
+    '<div class="stat"><b>' + won(bySum(function(g){ return g.country === '일본'; })) + '</b><span>일본</span></div>' +
+    '<div class="stat"><b>' + won(bySum(function(g, x){ return x.type === '트래픽'; })) + '</b><span>트래픽 · 잠재 ' + won(bySum(function(g, x){ return x.type === '잠재고객'; })) + ' · BOOST·X ' + won(bySum(function(g, x){ return x.type !== '트래픽' && x.type !== '잠재고객'; })) + '</span></div></div>';
+
+  r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
+    (A.insights || []).map(function(x){ return '<div class="day-h">' + md(x.date) + '</div>' + item(null, x.text); }).join('') + '</div>';
+
+  var countries = []; B.groups.forEach(function(g){ if (countries.indexOf(g.country) < 0) countries.push(g.country); });
+  r += countries.map(function(cn){
+    var gs = B.groups.filter(function(g){ return g.country === cn; });
+    var h = '<h2>' + dot('var(--accent)') + esc(cn) + ' · 10월 일별 광고비 ' + won(bySum(function(g){ return g.country === cn; })) + '</h2>' +
+      '<div class="list scroll"><table class="book"><tr><th>캠페인 · 바꾼 내용</th>' + B.days.map(function(d){ return '<th class="num">' + Number(d.slice(8)) + '</th>'; }).join('') + '<th class="num">합계</th></tr>';
+    gs.forEach(function(g){
+      h += '<tr><td class="grp" colspan="' + (B.days.length + 2) + '"><b>' + esc(g.product) + '</b> · ' + won(g.rows.reduce(function(a,x){ return a + sumv(x.v); }, 0)) + '</td></tr>' +
+        g.rows.map(function(x){
+          return '<tr><td style="min-width:200px;max-width:250px"><div class="t" style="font-size:.84rem">' + typeChip(x) + ' ' + esc(x.name) + '</div>' + (x.changes ? '<div class="sub" style="margin-top:3px">' + esc(x.changes) + '</div>' : '') + '</td>' +
+            x.v.map(function(n){ return '<td class="num' + (n ? '' : ' sub') + '">' + (n ? (n / 1000).toLocaleString('ko-KR') : '·') + '</td>'; }).join('') +
+            '<td class="num"><b>' + (sumv(x.v) / 1000).toLocaleString('ko-KR') + '</b></td></tr>';
+        }).join('');
+    });
+    h += '</table></div>';
+    var ms = M.rows.filter(function(x){ return x.country === cn; });
+    if (ms.length) h += '<h2>' + dot('var(--accent)') + esc(cn) + ' · ' + md(M.date) + ' 메타 캠페인별 성과</h2><div class="list scroll"><table class="book"><tr><th>캠페인 · 지면별 지출</th><th class="num">지출</th><th class="num">CTR(전체)</th><th class="num">노출</th><th class="num">결과</th><th class="num">결과당</th></tr>' +
+      ms.map(function(x){
+        return '<tr><td style="min-width:220px;max-width:280px"><div class="t" style="font-size:.84rem">' + esc(x.name) + '</div><div class="chips">' + typeChip(x) + '<span class="chip">' + esc(x.product) + '</span></div>' +
+          '<div class="sub" style="margin-top:3px">' + esc([x.place, x.note].filter(Boolean).join(' · ')) + '</div></td>' +
+          '<td class="num">' + won(x.spent) + '</td><td class="num">' + (x.ctr != null ? '<b>' + x.ctr.toFixed(2) + '%</b>' : '–') + '</td>' +
+          '<td class="num">' + (x.imp != null ? x.imp.toLocaleString('ko-KR') : '–') + '</td>' +
+          '<td class="num">' + (x.results != null ? x.results + ' <span class="sub">' + esc(x.rtype) + '</span>' : '–') + '</td><td class="num">' + won(x.cpr) + '</td></tr>';
+      }).join('') + '</table></div>';
+    return h;
+  }).join('') + '<p class="hint">광고비 단위: 천원 (비용 시트 기준). ' + esc(M.note) + '</p>';
+
+  r += '<h2>' + dot('var(--accent)') + '일본 JPOP 송세션 상세 · 메타 트래픽 (링크 CTR, 캡처 기준)</h2><div class="stats">' +
     '<div class="stat"><b>' + won(L.cost) + '</b><span>' + md(last) + ' 메타 트래픽 비용' + (L.partial ? ' (집계 중)' : '') + '</span></div>' +
     '<div class="stat"><b>' + L.clicks + '</b><span>클릭' + (Pv ? ' · 전날 ' + Pv.clicks : '') + '</span></div>' +
     '<div class="stat"><b>' + won(L.cpc) + '</b><span>평균 CPC' + (Pv ? ' · 전날 ' + won(Pv.cpc) : '') + '</span></div>' +
     '<div class="stat"><b>' + esc(best ? C[best.campaign].name : '–') + '</b><span>CTR 1위 ' + (best ? best.ctr.toFixed(2) + '% (클릭 20건 이상 중)' : '') + '</span></div></div>';
 
-  r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
-    (A.insights || []).map(function(x){ return '<div class="day-h">' + md(x.date) + '</div>' + item(null, x.text); }).join('') + '</div>';
-
   var products = []; A.campaigns.forEach(function(c){ var k = (c.product || '기타') + ' · ' + (c.channel || ''); if (products.indexOf(k) < 0) products.push(k); });
   r += products.map(function(pk){
     var cs = A.campaigns.filter(function(c){ return ((c.product || '기타') + ' · ' + (c.channel || '')) === pk; });
-    return '<h2>' + dot('var(--accent)') + '소재별 일별 성과 · ' + esc(pk) + '</h2><div class="list scroll"><table><tr><th>소재</th>' +
+    return '<h2 style="font-weight:500">소재별 일별 성과 · ' + esc(pk) + '</h2><div class="list scroll"><table class="book"><tr><th>소재</th>' +
     dates.map(function(d){ return '<th class="num">' + md(d) + '</th>'; }).join('') + '</tr>' +
     cs.map(function(c){
       var prevCtr = null;
@@ -197,12 +241,6 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
         t.variants.map(function(v){ return '<div class="note">· <b>' + esc(v.name) + '</b> — ' + esc(v.stat) + '</div>'; }).join('') +
         '<div class="res"><b>결과</b><span>' + esc(t.result) + '</span></div></div></div>';
     }).join('') + '</div>';
-
-  var CD = A.channelDaily;
-  r += '<h2>' + dot('var(--accent)') + '채널별 일 비용</h2><div class="list scroll"><table><tr><th>채널</th>' + CD.days.map(function(d){ return '<th class="num">' + esc(d) + '</th>'; }).join('') + '<th class="num">합계</th></tr>' +
-    CD.rows.map(function(row){ var sum = row.v.reduce(function(a,b){ return a + b; }, 0); return '<tr><td style="min-width:130px"><b>' + esc(row.name) + '</b></td>' + row.v.map(function(v){ return '<td class="num' + (v ? '' : ' sub') + '">' + (v ? v.toLocaleString('ko-KR') : '0') + '</td>'; }).join('') + '<td class="num"><b>' + sum.toLocaleString('ko-KR') + '</b></td></tr>'; }).join('') +
-    '<tr><td><b>합계</b></td>' + CD.days.map(function(_, i){ return '<td class="num"><b>' + CD.rows.reduce(function(a,row){ return a + row.v[i]; }, 0).toLocaleString('ko-KR') + '</b></td>'; }).join('') +
-    '<td class="num"><b>' + CD.rows.reduce(function(a,row){ return a + row.v.reduce(function(x,y){ return x + y; }, 0); }, 0).toLocaleString('ko-KR') + '</b></td></tr></table></div>';
 
   var CS = W.consults, regSum = function(m){ return Object.keys(m.reg).reduce(function(a,k){ return a + m.reg[k]; }, 0); }, held = function(m){ return m.total - m.canceled - m.pending; };
   r += '<h2>' + dot('var(--good)') + '상담 → 등록 성과 (건수)</h2><div class="list scroll"><table><tr><th>월</th><th class="num">상담</th><th class="num">취소</th><th class="num">진행</th><th class="num">등록</th><th class="num">전환율</th><th>등록 내역</th></tr>' +
