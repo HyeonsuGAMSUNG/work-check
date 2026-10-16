@@ -174,6 +174,12 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     if (tot == null && !rs.length) return '';
     return '<span class="sub" style="font-weight:500">' + (tot != null ? ' · 광고비 ' + won(tot) : '') + (rs.length ? ' · 송세션 메타 CTR ' + (clk / imp * 100).toFixed(2) + '% · 클릭 ' + clk : '') + '</span>';
   };
+  // 광고비 표 칸의 CTR: 송세션은 캡처(링크 CTR, ads.daily), 나머지는 메타 내보내기(전체 CTR, ads.meta14)
+  var cellCtr = function(x, d){
+    if (x.cid) { var q = A.daily.filter(function(r){ return r.date === d && r.campaign === x.cid; })[0]; return q && q.ctr != null ? q.ctr : null; }
+    if (x.meta && d === M.date) { var m = M.rows.filter(function(r){ return r.name === x.meta; })[0]; return m && m.ctr != null && m.spent ? m.ctr : null; }
+    return null;
+  };
   var adStat = function(d, a){
     var t = '';
     if (a.campaign) {
@@ -207,7 +213,13 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
       h += '<tr><td class="grp" colspan="' + (B.days.length + 2) + '"><b>' + esc(g.product) + '</b> · ' + won(g.rows.reduce(function(a,x){ return a + sumv(x.v); }, 0)) + '</td></tr>' +
         g.rows.map(function(x){
           return '<tr><td style="min-width:200px;max-width:250px"><div class="t" style="font-size:.84rem">' + typeChip(x) + ' ' + esc(x.name) + '</div>' + (x.changes ? '<div class="sub" style="margin-top:3px">' + esc(x.changes) + '</div>' : '') + '</td>' +
-            x.v.map(function(n){ return '<td class="num' + (n ? '' : ' sub') + '">' + (n ? (n / 1000).toLocaleString('ko-KR') : '·') + '</td>'; }).join('') +
+            (function(){ var pc = null; return x.v.map(function(n, i){
+              var c = cellCtr(x, B.days[i]), ar = '';
+              if (c != null && pc != null) ar = c > pc ? '<span class="up">▲</span>' : c < pc ? '<span class="down">▼</span>' : '';
+              if (c != null) pc = c;
+              return '<td class="num' + (n ? '' : ' sub') + '">' + (n ? (n / 1000).toLocaleString('ko-KR') : '·') +
+                (c != null ? '<div class="sub" style="font-size:.68rem;color:var(--fg)">' + c.toFixed(1) + '%' + ar + '</div>' : '') + '</td>';
+            }).join(''); })() +
             '<td class="num"><b>' + (sumv(x.v) / 1000).toLocaleString('ko-KR') + '</b></td></tr>';
         }).join('');
     });
@@ -222,7 +234,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
           '<td class="num">' + (x.results != null ? x.results + ' <span class="sub">' + esc(x.rtype) + '</span>' : '–') + '</td><td class="num">' + won(x.cpr) + '</td></tr>';
       }).join('') + '</table></div>';
     return h;
-  }).join('') + '<p class="hint">광고비 단위: 천원 (비용 시트 기준). ' + esc(M.note) + '</p>';
+  }).join('') + '<p class="hint">칸 위: 그날 광고비(천원, 비용 시트) · 칸 아래: 그날 CTR(▲▼ 전날 대비). CTR은 송세션 10/12~14 캡처, 나머지는 10/14 메타 엑셀만 있음 → 10/1~13은 일별 엑셀을 받으면 채움. ' + esc(M.note) + '</p>';
 
   r += '<h2>' + dot('var(--accent)') + '일본 JPOP 송세션 상세 · 메타 트래픽 (링크 CTR, 캡처 기준)</h2><div class="stats">' +
     '<div class="stat"><b>' + won(L.cost) + '</b><span>' + md(last) + ' 메타 트래픽 비용' + (L.partial ? ' (집계 중)' : '') + '</span></div>' +
