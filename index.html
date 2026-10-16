@@ -120,6 +120,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-report"></section>
   <section id="s-remind"></section>
   <section id="s-daily"></section>
+  <section id="s-consult"></section>
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
@@ -164,6 +165,26 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   // 클릭 20건 미만은 CTR이 쉽게 튀므로 1위 후보에서 뺀다
   var best = A.daily.filter(function(r){ return r.date === last && r.ctr != null && r.clicks >= 20; }).sort(function(a,b){ return b.ctr - a.ctr; })[0];
   var B = A.book, M = A.meta14;
+  // 일별 액션 옆에 붙이는 그날 수치: 날짜 줄 = 전체 광고비 + 메타 트래픽 CTR(노출 역산 가중), 항목 = 해당 캠페인
+  var bookDay = function(d, f){ var i = B.days.indexOf(d); if (i < 0) return null; var t = 0; B.groups.forEach(function(g){ g.rows.forEach(function(x){ if (!f || f(x)) t += x.v[i]; }); }); return t; };
+  var daySum = function(d){
+    var rs = A.daily.filter(function(x){ return x.date === d && x.ctr; }), clk = 0, imp = 0;
+    rs.forEach(function(x){ clk += x.clicks; imp += x.clicks / (x.ctr / 100); });
+    var tot = bookDay(d);
+    if (tot == null && !rs.length) return '';
+    return '<span class="sub" style="font-weight:500">' + (tot != null ? ' · 광고비 ' + won(tot) : '') + (rs.length ? ' · 송세션 메타 CTR ' + (clk / imp * 100).toFixed(2) + '% · 클릭 ' + clk : '') + '</span>';
+  };
+  var adStat = function(d, a){
+    var t = '';
+    if (a.campaign) {
+      var x = A.daily.filter(function(q){ return q.date === d && q.campaign === a.campaign; })[0];
+      if (x) t = '그날 ' + won(x.cost) + (x.ctr != null ? ' · CTR ' + x.ctr.toFixed(2) + '% · ' + x.clicks + '클릭 · CPC ' + x.cpc + '원' : ' · CTR 캡처 없음') + (x.partial ? ' *' : '');
+    } else if (a.book) {
+      var v = bookDay(d, function(r){ return r.name.indexOf(a.book) >= 0; });
+      if (v != null) t = '그날 ' + won(v) + ' · CTR 캡처 없음';
+    }
+    return t ? '<div class="note" style="color:var(--fg)">📊 ' + esc(t) + '</div>' : '';
+  };
   var sumv = function(v){ return v.reduce(function(a,b){ return a + b; }, 0); };
   var bySum = function(f){ return B.groups.reduce(function(a,g){ return a + g.rows.reduce(function(x,row){ return x + (f(g, row) ? sumv(row.v) : 0); }, 0); }, 0); };
   var typeChip = function(x){ var c = x.type === '트래픽' ? 't-tr' : x.type === '잠재고객' ? 't-ld' : 't-bo'; return '<span class="chip ' + c + '">' + esc(x.type + (x.aud ? ' ' + x.aud : '')) + '</span>'; };
@@ -228,12 +249,12 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     }).join('') + '</table></div>';
   }).join('') + '<p class="hint">칸 안: CTR / 클릭 · CPC / 그날 비용. * 표시는 당일 집계 중 캡처.</p>';
 
-  r += '<h2>' + dot('var(--accent)') + '일별 광고 액션 · 이유와 결과</h2><div class="list">' +
+  r += '<h2>' + dot('var(--accent)') + '일별 광고 액션 · 그날 비용·CTR과 이유·결과</h2><div class="list">' +
     W.log.filter(function(g){ return !g.undated; }).map(function(g){
       var ads = g.items.filter(function(a){ return a.tag === '광고'; });
       if (!ads.length) return '';
-      return '<div class="day-h">' + md(g.date) + '</div>' + ads.map(function(a){ return item(null, a.title, null, a.why === '이유 미기록' ? ['<span class="chip old">이유 적어 주세요</span>'] : [], whyRes(a)); }).join('');
-    }).join('') + '</div>';
+      return '<div class="day-h">' + md(g.date) + daySum(g.date) + '</div>' + ads.map(function(a){ return item(null, a.title, null, a.why === '이유 미기록' ? ['<span class="chip old">이유 적어 주세요</span>'] : [], adStat(g.date, a) + whyRes(a)); }).join('');
+    }).join('') + '</div><p class="hint">비용은 비용 시트(설정 예산), CTR·클릭·CPC는 메타 링크 기준. * 는 당일 집계 중 캡처.</p>';
 
   r += '<h2>' + dot('var(--accent)') + 'A/B 테스트 · 왜 했고 무엇이 달랐나</h2><div class="list">' +
     A.tests.map(function(t){
@@ -243,13 +264,6 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
         '<div class="res"><b>결과</b><span>' + esc(t.result) + '</span></div></div></div>';
     }).join('') + '</div>';
 
-  var CS = W.consults, regSum = function(m){ return Object.keys(m.reg).reduce(function(a,k){ return a + m.reg[k]; }, 0); }, held = function(m){ return m.total - m.canceled - m.pending; };
-  r += '<h2>' + dot('var(--good)') + '상담 → 등록 성과 (건수)</h2><div class="list scroll"><table><tr><th>월</th><th class="num">상담</th><th class="num">취소</th><th class="num">진행</th><th class="num">등록</th><th class="num">전환율</th><th>등록 내역</th></tr>' +
-    CS.monthly.map(function(m){ var h = held(m), g = regSum(m); return '<tr><td><b>' + Number(m.month.slice(5)) + '월</b></td><td class="num">' + m.total + '</td><td class="num">' + m.canceled + '</td><td class="num">' + h + '</td><td class="num"><b>' + g + '</b></td><td class="num">' + (h ? Math.round(g / h * 100) + '%' : '–') + '</td><td class="sub" style="min-width:140px">' + esc(Object.keys(m.reg).map(function(k){ return k + ' ' + m.reg[k]; }).join(', ')) + '</td></tr>'; }).join('') +
-    '</table></div><p class="hint">유입 경로별: ' + CS.bySource.map(function(x){ return esc(x.source) + ' ' + x.total + '건 중 등록 ' + x.registered; }).join(' · ') + '. ' + esc(CS.sourceNote) + '</p>';
-  r += '<details class="fold"><summary>이번 달 상담 목록과 읽을 때 주의</summary><div class="list" style="margin-top:8px">' +
-    CS.recent.map(function(x){ var reg = /신청 완료|3기 완료|판매/.test(x.status); return item(null, x.date.slice(5).replace('-', '/') + ' · ' + x.name, null, ['<span class="chip ' + (reg ? 'ok' : x.status === '시작 전' ? 'old' : '') + '">' + esc(x.status) + '</span>'].concat(x.source ? ['<span class="chip">' + esc(x.source) + '</span>'] : [])); }).join('') +
-    CS.notes.map(function(n){ return item(null, '', n); }).join('') + '</div></details>';
   r += '<details class="fold"><summary>광고 수치 확인 필요</summary><div class="list" style="margin-top:8px">' + A.caveats.map(function(n){ return item(null, '', n); }).join('') + '</div><p class="hint">' + esc(A.metricsNote) + '</p></details>';
   document.getElementById('s-report').innerHTML = r;
 
@@ -309,9 +323,30 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
       }).join('');
     }).join('') + '</table></div><p class="hint">체크는 노션 하루 페이지의 "고정 데일리 업무" 기준.</p>';
   dy += '<h2>' + dot('var(--good)') + '일별 내가 한 일</h2><div class="list">' + W.log.map(function(g){
-    return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 노션에 완료 날짜 없음' : md(g.date)) + ' · ' + g.items.length + '건</div>' + g.items.map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'], g.undated ? '' : whyRes(a)); }).join('');
+    return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 노션에 완료 날짜 없음' : md(g.date)) + ' · ' + g.items.length + '건' + (g.undated ? '' : daySum(g.date)) + '</div>' + g.items.map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'], g.undated ? '' : (a.tag === '광고' ? adStat(g.date, a) : '') + whyRes(a)); }).join('');
   }).join('') + '</div>';
   document.getElementById('s-daily').innerHTML = dy;
+
+  /* ---------- 상담 전환: 월별 상담자 → 무엇으로 전환 ---------- */
+  var CV = W.consults.conv, mon = function(m){ return Number(m.slice(5)) + '월'; };
+  var pct = function(a, b){ return b ? Math.round(a / b * 100) + '%' : '–'; };
+  var cs = '<div class="stats">' + CV.months.map(function(m){
+    return '<div class="stat"><b>' + m.convPeople + '명 / ' + m.held + '명</b><span>' + mon(m.month) + ' 전환 / 실제 상담 · ' + pct(m.convPeople, m.held) + '</span></div>';
+  }).join('') + '</div>';
+  cs += '<h2>' + dot('var(--good)') + '월별 상담 → 전환</h2><div class="list scroll"><table><tr><th>월</th><th class="num">상담 건</th><th class="num">상담자</th><th class="num">실제 상담</th><th class="num">시작 전</th><th class="num">전환 인원</th><th class="num">전환율</th><th>무엇으로</th></tr>' +
+    CV.months.map(function(m){
+      return '<tr><td><b>' + mon(m.month) + '</b></td><td class="num">' + m.rows + '</td><td class="num">' + m.people + '</td><td class="num">' + m.held + '</td><td class="num sub">' + m.pending + '</td><td class="num"><b>' + m.convPeople + '</b></td><td class="num">' + pct(m.convPeople, m.held) + '</td>' +
+        '<td style="min-width:160px">' + Object.keys(m.byProduct).map(function(k){ return '<span class="chip ok">' + esc(k) + ' ' + m.byProduct[k] + '</span>'; }).join(' ') + '</td></tr>';
+    }).join('') + '</table></div>';
+  CV.months.slice().reverse().forEach(function(m){
+    cs += '<h2>' + dot('var(--good)') + mon(m.month) + ' 전환 ' + m.convCount + '건</h2><div class="list">' +
+      m.conv.map(function(c){ return item(null, md(c.date) + ' · ' + c.name + ' → ' + c.product, c.note, [c.seg, c.source].filter(Boolean).map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; })); }).join('') +
+      (m.open.length ? '<div class="day-h">아직 결과 없음 · ' + m.open.length + '건</div>' + m.open.map(function(o){ return item(null, md(o.date) + ' · ' + o.name, null, ['<span class="chip ' + (o.status === '시작 전' ? 'old' : '') + '">' + esc(o.status) + '</span>'].concat(o.source ? ['<span class="chip">' + esc(o.source) + '</span>'] : [])); }).join('') : '') + '</div>';
+  });
+  cs += '<h2>' + dot('var(--muted-2)') + '유입 경로별 (9/15 이후 기록분)</h2><div class="list scroll"><table><tr><th>경로</th><th class="num">상담 건</th><th class="num">전환</th></tr>' +
+    CV.bySource.map(function(x){ return '<tr><td><b>' + esc(x.source) + '</b></td><td class="num">' + x.rows + '</td><td class="num"><b>' + x.conv + '</b></td></tr>'; }).join('') + '</table></div>';
+  cs += '<details class="fold"><summary>읽을 때 주의</summary><div class="list" style="margin-top:8px">' + CV.notes.map(function(n){ return item(null, '', n); }).join('') + '</div></details>';
+  document.getElementById('s-consult').innerHTML = cs;
 
   /* ---------- 광고 마케팅 예정 ---------- */
   var dated = W.plans.filter(function(p){ return p.date; }).sort(function(a,b){ return a.date < b.date ? -1 : 1; }), open = W.plans.filter(function(p){ return !p.date; });
@@ -325,7 +360,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   document.getElementById('s-plan').innerHTML = pl;
 
   /* ---------- 탭 ---------- */
-  var TABS = [['report','광고 효율 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['plan','광고 마케팅 예정']];
+  var TABS = [['report','광고 효율 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['consult','상담 전환'],['plan','광고 마케팅 예정']];
   var tabs = document.getElementById('tabs');
   tabs.innerHTML = TABS.map(function(t){ return '<button role="tab" type="button" data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
   var show = function(id){
