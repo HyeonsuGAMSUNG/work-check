@@ -198,11 +198,22 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   var bySum = function(f){ return B.groups.reduce(function(a,g){ return a + g.rows.reduce(function(x,row){ return x + (f(g, row) ? sumv(row.v) : 0); }, 0); }, 0); };
   var typeChip = function(x){ var c = x.type === '트래픽' ? 't-tr' : x.type === '잠재고객' ? 't-ld' : 't-bo'; return '<span class="chip ' + c + '">' + esc(x.type + (x.aud ? ' ' + x.aud : '')) + '</span>'; };
   var dRange = md(B.days[0]).split(' ')[0] + '~' + md(B.days[B.days.length - 1]).split(' ')[0];
-  var r = '<div class="stats">' +
-    '<div class="stat"><b>' + won(bySum(function(){ return true; })) + '</b><span>' + dRange + ' 총 광고비</span></div>' +
-    '<div class="stat"><b>' + won(bySum(function(g){ return g.country === '한국'; })) + '</b><span>한국</span></div>' +
-    '<div class="stat"><b>' + won(bySum(function(g){ return g.country === '일본'; })) + '</b><span>일본</span></div>' +
-    '<div class="stat"><b>' + won(bySum(function(g, x){ return x.type === '트래픽'; })) + '</b><span>트래픽 · 잠재 ' + won(bySum(function(g, x){ return x.type === '잠재고객'; })) + ' · BOOST·X ' + won(bySum(function(g, x){ return x.type !== '트래픽' && x.type !== '잠재고객'; })) + '</span></div></div>';
+  // 최상단 요약: 국가별 / 채널(앱)별 광고비 한 줄씩, 비중 막대
+  var TOT = bySum(function(){ return true; });
+  var app = function(x){ return x.type === 'X' ? 'X' : x.type === 'BOOST' ? '인스타 BOOST' : '메타 광고'; };
+  var sumRows = function(title, rows){
+    return '<div class="list" style="flex:1;min-width:260px"><table><tr><th>' + title + '</th><th class="num">광고비</th><th class="num">비중</th></tr>' +
+      rows.map(function(x){ var p = TOT ? x[1] / TOT * 100 : 0;
+        return '<tr><td><b style="white-space:nowrap">' + esc(x[0]) + '</b>' + (x[2] ? '<div class="sub">' + esc(x[2]) + '</div>' : '') + '</td><td class="num" style="font-size:.95rem"><b>' + won(x[1]) + '</b></td>' +
+          '<td class="num" style="width:84px"><div style="display:flex;align-items:center;gap:5px;justify-content:flex-end"><span style="display:inline-block;height:6px;border-radius:3px;background:var(--accent);width:' + Math.max(p * .4, x[1] ? 2 : 0) + 'px"></span>' + Math.round(p) + '%</div></td></tr>';
+      }).join('') + '<tr><td><b>합계</b></td><td class="num" style="font-size:.95rem"><b>' + won(TOT) + '</b></td><td class="num">100%</td></tr></table></div>';
+  };
+  var ctry = ['한국','일본','미국'].map(function(cn){ return [cn, bySum(function(g){ return g.country === cn; }), cn === '미국' ? '아직 집행 없음' : '']; });
+  var apps = ['메타 광고','인스타 BOOST','X'].map(function(a){
+    return [a, bySum(function(g, x){ return app(x) === a; }), a === '메타 광고' ? '트래픽 ' + won(bySum(function(g, x){ return x.type === '트래픽'; })) + ' · 잠재고객 ' + won(bySum(function(g, x){ return x.type === '잠재고객'; })) : a === 'X' ? '일본 송세션, 10/14 중단' : '일본 송세션'];
+  });
+  var r = '<h2 style="margin-top:4px">' + dot('var(--accent)') + dRange + ' 광고비 ' + won(TOT) + '</h2>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' + sumRows('국가별', ctry) + sumRows('채널(앱)별', apps) + '</div>';
 
   r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
     (A.insights || []).map(function(x){ return '<div class="day-h">' + md(x.date) + '</div>' + item(null, x.text); }).join('') + '</div>';
