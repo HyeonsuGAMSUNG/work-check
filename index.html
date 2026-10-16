@@ -92,7 +92,8 @@ td.d.y{color:var(--good);font-weight:700}
 table.book td:first-child,table.book th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:1px 0 0 var(--border)}
 table.book td.grp{background:var(--chip-bg);font-size:.8rem;position:sticky;left:0;white-space:nowrap}
 table.book td.grp2{background:var(--chip-bg)}
-table.book td.num{padding-inline:6px}
+table.book td.num,table.book th.num{padding-inline:14px;min-width:96px;border-left:1px solid var(--border)}
+table.book tr:nth-child(even) td:not(.grp):not(.grp2){background-image:linear-gradient(var(--chip-bg),var(--chip-bg))}
 .chip.t-tr{background:var(--good-bg);color:var(--good);border-color:transparent}
 .chip.t-ld{background:var(--warn-bg);color:var(--warn);border-color:transparent}
 .chip.t-bo{background:var(--bad-bg);color:var(--bad);border-color:transparent}
