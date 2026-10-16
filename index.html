@@ -129,7 +129,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1792142507"></script>
+<script src="data.js?v=1792156282"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -216,6 +216,26 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   });
   var r = '<h2 style="margin-top:4px">' + dot('var(--accent)') + dRange + ' 광고비 ' + won(TOT) + '</h2>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' + sumRows('국가별', ctry) + sumRows('채널(앱)별', apps) + '</div>';
+
+  // 최근 판단: 캠페인별 끄기/축소/유지/증액 (CTR보다 결과당 비용 기준)
+  if (A.review) {
+    var RV = A.review, VC = {'증액':'ok','유지':'','축소':'old','끄기':'due','확인':'old','꺼짐':''};
+    var VO = ['증액','유지','축소','확인','끄기','꺼짐'];
+    r += '<h2>' + dot('var(--bad)') + '최근 판단 · ' + esc(RV.period) + '</h2><div class="list"><div class="item"><div class="body"><div class="t"><b>결론: ' + esc(RV.answer) + '</b></div>' +
+      RV.reasons.map(function(x){ return '<div class="note">· ' + esc(x) + '</div>'; }).join('') + '</div></div></div>';
+    ['일본','한국'].forEach(function(cn){
+      var rs = RV.rows.filter(function(x){ return x.country === cn; }).sort(function(a,b){ return VO.indexOf(a.verdict) - VO.indexOf(b.verdict); });
+      var cnt = {}; rs.forEach(function(x){ cnt[x.verdict] = (cnt[x.verdict] || 0) + 1; });
+      r += '<h2 style="font-weight:500">' + esc(cn) + ' · ' + VO.filter(function(v){ return cnt[v]; }).map(function(v){ return v + ' ' + cnt[v]; }).join(' · ') + '</h2><div class="list scroll"><table class="book"><tr><th>캠페인 · 판단 이유</th><th class="num">판단</th><th class="num">결과당</th><th class="num">CTR</th><th class="num">결과</th><th class="num">지출</th></tr>' +
+        rs.map(function(x){
+          return '<tr' + (x.verdict === '꺼짐' ? ' style="opacity:.55"' : '') + '><td style="min-width:240px;max-width:320px"><div class="t" style="font-size:.84rem">' + esc(x.name) + '</div><div class="chips"><span class="chip">' + esc(x.product) + '</span></div><div class="sub" style="margin-top:3px">' + esc(x.why) + '</div></td>' +
+            '<td class="num"><span class="chip ' + (VC[x.verdict] || '') + '" style="font-size:.78rem">' + esc(x.verdict) + '</span></td>' +
+            '<td class="num"><b>' + (x.cpr != null ? won(x.cpr) : '–') + '</b></td><td class="num">' + x.ctr.toFixed(2) + '%</td>' +
+            '<td class="num">' + x.results + ' <span class="sub">' + esc(x.rtype) + '</span></td><td class="num">' + won(x.spent) + '</td></tr>';
+        }).join('') + '</table></div>';
+    });
+    r += '<p class="hint">' + esc(RV.note) + '</p>';
+  }
 
   r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
     (A.insights || []).map(function(x){ return '<div class="day-h">' + md(x.date) + '</div>' + item(null, x.text); }).join('') + '</div>';
