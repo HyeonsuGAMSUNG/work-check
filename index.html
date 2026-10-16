@@ -384,8 +384,8 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   Object.keys(weeks).sort().forEach(function(k, wi){
     var xs = weeks[k], lastD = xs[xs.length - 1].date, past = dd(lastD) < 0, cur = dd(k) <= 0 && dd(lastD) >= 0;
     var body = '<div class="list">' + xs.map(function(x){
-      var c = PC[x.cls], n = dd(x.date), cd = dd(c.deadline);
-      return '<div class="item"' + (n < 0 ? ' style="opacity:.55"' : n === 0 ? ' style="background:var(--warn-bg)"' : '') + '><div class="body"><div class="t">' + md(x.date) + (n === 0 ? ' · 오늘' : '') + ' — ' + esc(c.name) + ' <span class="sub">(마감 ' + (cd >= 0 ? 'D-' + cd : '지남') + ')</span></div>' +
+      var c = PC[x.cls], n = dd(x.date), cd = Math.round((new Date(c.deadline + 'T00:00:00') - new Date(x.date + 'T00:00:00')) / 864e5);
+      return '<div class="item"' + (n < 0 ? ' style="opacity:.55"' : n === 0 ? ' style="background:var(--warn-bg)"' : '') + '><div class="body"><div class="t">' + md(x.date) + (n === 0 ? ' · 오늘' : '') + ' — ' + esc(c.name) + ' <span class="sub">(마감 ' + (cd > 0 ? 'D-' + cd : cd === 0 ? '당일' : '지남') + ')</span></div>' +
         '<div class="note">' + esc(x.what) + '</div><div class="chips">' + chChip(x.channel) + (EV[x.date] ? EV[x.date].map(function(e){ return '<span class="chip">📅 ' + esc(e) + '</span>'; }).join('') : '') + '</div></div></div>';
     }).join('') + '</div>';
     var label = md(k).split(' ')[0] + ' 주' + (cur ? ' · 이번 주' : '');
