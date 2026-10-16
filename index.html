@@ -90,7 +90,8 @@ td.d.y{color:var(--good);font-weight:700}
 .sub{font-size:.74rem;color:var(--muted)}
 /* 광고비 장부: 첫 칸(캠페인)은 가로 스크롤해도 고정 */
 table.book td:first-child,table.book th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:1px 0 0 var(--border)}
-table.book td.grp{background:var(--chip-bg);font-size:.8rem;position:sticky;left:0}
+table.book td.grp{background:var(--chip-bg);font-size:.8rem;position:sticky;left:0;white-space:nowrap}
+table.book td.grp2{background:var(--chip-bg)}
 table.book td.num{padding-inline:6px}
 .chip.t-tr{background:var(--good-bg);color:var(--good);border-color:transparent}
 .chip.t-ld{background:var(--warn-bg);color:var(--warn);border-color:transparent}
@@ -208,19 +209,19 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   r += countries.map(function(cn){
     var gs = B.groups.filter(function(g){ return g.country === cn; });
     var h = '<h2>' + dot('var(--accent)') + esc(cn) + ' · 10월 일별 광고비 ' + won(bySum(function(g){ return g.country === cn; })) + '</h2>' +
-      '<div class="list scroll"><table class="book"><tr><th>캠페인 · 바꾼 내용</th>' + B.days.map(function(d){ return '<th class="num">' + Number(d.slice(8)) + '</th>'; }).join('') + '<th class="num">합계</th></tr>';
+      '<div class="list scroll"><table class="book"><tr><th>캠페인 · 바꾼 내용</th>' + B.days.map(function(d){ return '<th class="num">' + md(d).replace(' (', '<br>(') + '</th>'; }).join('') + '<th class="num">10월 합계</th></tr>';
     gs.forEach(function(g){
-      h += '<tr><td class="grp" colspan="' + (B.days.length + 2) + '"><b>' + esc(g.product) + '</b> · ' + won(g.rows.reduce(function(a,x){ return a + sumv(x.v); }, 0)) + '</td></tr>' +
+      h += '<tr><td class="grp"><b>' + esc(g.product) + '</b> · ' + won(g.rows.reduce(function(a,x){ return a + sumv(x.v); }, 0)) + '</td><td class="grp2" colspan="' + (B.days.length + 1) + '"></td></tr>' +
         g.rows.map(function(x){
           return '<tr><td style="min-width:200px;max-width:250px"><div class="t" style="font-size:.84rem">' + typeChip(x) + ' ' + esc(x.name) + '</div>' + (x.changes ? '<div class="sub" style="margin-top:3px">' + esc(x.changes) + '</div>' : '') + '</td>' +
             (function(){ var pc = null; return x.v.map(function(n, i){
               var c = cellCtr(x, B.days[i]), ar = '';
               if (c != null && pc != null) ar = c > pc ? '<span class="up">▲</span>' : c < pc ? '<span class="down">▼</span>' : '';
               if (c != null) pc = c;
-              return '<td class="num' + (n ? '' : ' sub') + '">' + (n ? (n / 1000).toLocaleString('ko-KR') : '·') +
-                (c != null ? '<div class="sub" style="font-size:.68rem;color:var(--fg)">' + c.toFixed(1) + '%' + ar + '</div>' : '') + '</td>';
+              return '<td class="num' + (n ? '' : ' sub') + '">' + (n ? won(n) : '–') +
+                (c != null ? '<div class="sub" style="font-size:.7rem;color:var(--fg)">CTR ' + c.toFixed(1) + '%' + ar + '</div>' : '') + '</td>';
             }).join(''); })() +
-            '<td class="num"><b>' + (sumv(x.v) / 1000).toLocaleString('ko-KR') + '</b></td></tr>';
+            '<td class="num"><b>' + won(sumv(x.v)) + '</b></td></tr>';
         }).join('');
     });
     h += '</table></div>';
@@ -234,7 +235,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
           '<td class="num">' + (x.results != null ? x.results + ' <span class="sub">' + esc(x.rtype) + '</span>' : '–') + '</td><td class="num">' + won(x.cpr) + '</td></tr>';
       }).join('') + '</table></div>';
     return h;
-  }).join('') + '<p class="hint">칸 위: 그날 광고비(천원, 비용 시트) · 칸 아래: 그날 CTR(▲▼ 전날 대비). CTR은 송세션 10/12~14 캡처, 나머지는 10/14 메타 엑셀만 있음 → 10/1~13은 일별 엑셀을 받으면 채움. ' + esc(M.note) + '</p>';
+  }).join('') + '<p class="hint">칸 위: 그날 광고비(비용 시트) · 칸 아래: 그날 CTR(▲▼ 전날 대비). 표는 옆으로 밀어서 날짜를 넘겨 보세요. CTR은 송세션 10/12~14 캡처, 나머지는 10/14 메타 엑셀만 있음 → 10/1~13은 일별 엑셀을 받으면 채움. ' + esc(M.note) + '</p>';
 
   r += '<h2>' + dot('var(--accent)') + '일본 JPOP 송세션 상세 · 메타 트래픽 (링크 CTR, 캡처 기준)</h2><div class="stats">' +
     '<div class="stat"><b>' + won(L.cost) + '</b><span>' + md(last) + ' 메타 트래픽 비용' + (L.partial ? ' (집계 중)' : '') + '</span></div>' +
