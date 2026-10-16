@@ -332,12 +332,14 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   document.getElementById('s-remind').innerHTML = m;
 
   /* ---------- 일간 업무: 담당 업무 리스트 + 일별 한 일 ---------- */
+  // 주기가 '상시'인 업무는 매일 하는 일이라 월요일~오늘까지 자동 체크
+  var todayIdx = (now.getDay() + 6) % 7, isAlways = function(f){ return /^상시/.test(f.freq || ''); };
   var WD = ['월','화','수','목','금'], todayIso = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
   var todayLog = W.log.filter(function(g){ return g.date === todayIso; })[0];
   var weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
   var weekCount = W.log.filter(function(g){ return !g.undated && new Date(g.date + 'T00:00:00') >= weekStart; }).reduce(function(a,g){ return a + g.items.length; }, 0);
   var dy = '<div class="stats">' +
-    '<div class="stat"><b>' + W.fixed.filter(function(f){ return f.checked.indexOf(todayDay) >= 0; }).length + ' / ' + W.fixed.length + '</b><span>담당 업무 중 오늘(' + todayDay + ') 한 것</span></div>' +
+    '<div class="stat"><b>' + W.fixed.filter(function(f){ return f.checked.indexOf(todayDay) >= 0 || (isAlways(f) && todayIdx < 5); }).length + ' / ' + W.fixed.length + '</b><span>담당 업무 중 오늘(' + todayDay + ') 한 것</span></div>' +
     '<div class="stat"><b>' + (todayLog ? todayLog.items.length : 0) + '</b><span>오늘 한 일</span></div>' +
     '<div class="stat"><b>' + weekCount + '</b><span>이번 주 한 일</span></div>' +
     (function(){ var cm = W.consults.conv.months[W.consults.conv.months.length - 1]; return cm ? '<a class="stat" href="#consult" data-go="consult" style="text-decoration:none"><b>' + cm.rows + '건 · 전환 ' + cm.convPeople + '명</b><span>' + Number(cm.month.slice(5)) + '월 상담 → 상담 전환 탭</span></a>' : ''; })() + '</div>';
@@ -346,9 +348,9 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     areas.map(function(a){
       return '<tr><td class="grp" colspan="' + (WD.length + 2) + '"><b>' + esc(a) + '</b></td></tr>' + W.fixed.filter(function(f){ return f.area === a; }).map(function(f){
         return '<tr><td style="min-width:190px;max-width:260px"><div class="t" style="font-size:.86rem">' + esc(f.name) + '</div>' + (f.note ? '<div class="sub">' + esc(f.note) + '</div>' : '') + '</td><td class="sub" style="white-space:nowrap">' + esc(f.freq) + '</td>' +
-          WD.map(function(d){ var y = f.checked.indexOf(d) >= 0; return '<td class="d' + (y ? ' y' : '') + '">' + (y ? '✓' : '·') + '</td>'; }).join('') + '</tr>';
+          WD.map(function(d, di){ var y = f.checked.indexOf(d) >= 0 || (isAlways(f) && di <= todayIdx); return '<td class="d' + (y ? ' y' : '') + '">' + (y ? '✓' : '·') + '</td>'; }).join('') + '</tr>';
       }).join('');
-    }).join('') + '</table></div><p class="hint">체크는 노션 하루 페이지의 "고정 데일리 업무" 기준.</p>';
+    }).join('') + '</table></div><p class="hint">상시 업무는 매일 자동 체크. 나머지는 노션 하루 페이지의 "고정 데일리 업무" 기준.</p>';
   dy += '<h2>' + dot('var(--good)') + '일별 내가 한 일</h2><div class="list">' + W.log.map(function(g){
     return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 노션에 완료 날짜 없음' : md(g.date)) + ' · ' + g.items.length + '건' + (g.undated ? '' : daySum(g.date)) + '</div>' + g.items.map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'], g.undated ? '' : (a.tag === '광고' ? adStat(g.date, a) : '') + whyRes(a)); }).join('');
   }).join('') + '</div>';
