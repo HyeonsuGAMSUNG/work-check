@@ -327,7 +327,8 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   var dy = '<div class="stats">' +
     '<div class="stat"><b>' + W.fixed.filter(function(f){ return f.checked.indexOf(todayDay) >= 0; }).length + ' / ' + W.fixed.length + '</b><span>담당 업무 중 오늘(' + todayDay + ') 한 것</span></div>' +
     '<div class="stat"><b>' + (todayLog ? todayLog.items.length : 0) + '</b><span>오늘 한 일</span></div>' +
-    '<div class="stat"><b>' + weekCount + '</b><span>이번 주 한 일</span></div></div>';
+    '<div class="stat"><b>' + weekCount + '</b><span>이번 주 한 일</span></div>' +
+    (function(){ var cm = W.consults.conv.months[W.consults.conv.months.length - 1]; return cm ? '<a class="stat" href="#consult" data-go="consult" style="text-decoration:none"><b>' + cm.rows + '건 · 전환 ' + cm.convPeople + '명</b><span>' + Number(cm.month.slice(5)) + '월 상담 → 상담 전환 탭</span></a>' : ''; })() + '</div>';
   var areas = []; W.fixed.forEach(function(f){ if (areas.indexOf(f.area) < 0) areas.push(f.area); });
   dy += '<h2>' + dot('var(--accent)') + '담당 업무 · 이번 주 체크</h2><div class="list scroll"><table class="book"><tr><th>세부 업무</th><th>주기</th>' + WD.map(function(d){ return '<th style="text-align:center"' + (d === todayDay ? ' class="up"' : '') + '>' + d + '</th>'; }).join('') + '</tr>' +
     areas.map(function(a){
@@ -366,7 +367,34 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   var dated = W.plans.filter(function(p){ return p.date; }).sort(function(a,b){ return a.date < b.date ? -1 : 1; }), open = W.plans.filter(function(p){ return !p.date; });
   var planItem = function(p){ return item(null, p.title, p.why, ['<span class="chip">' + esc(p.channel) + '</span>', '<span class="chip' + (p.status === '대기' ? ' old' : '') + '">' + esc(p.status) + '</span>'].concat(p.est ? ['<span class="chip old">날짜 추정</span>'] : [])); };
   var dg = {}; dated.forEach(function(p){ (dg[p.date] = dg[p.date] || []).push(p); });
-  var pl = '<h2>' + dot('var(--accent)') + '날짜가 정해진 것</h2><div class="list">' + Object.keys(dg).sort().map(function(d){
+  /* 클래스 마감 + 매일 홍보 일정 (노션 1주차 = 모집 마감) */
+  var PR = W.promo, PC = {}, dd = function(d){ return Math.round((new Date(d + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5); };
+  PR.classes.forEach(function(c){ PC[c.key] = c; });
+  var CHC = {'카톡':'t-ld','커뮤니티':'t-tr','스티비':'ok','광고':'t-bo'};
+  var chChip = function(ch){ return ch.split(' + ').map(function(x){ return '<span class="chip ' + (CHC[x] || '') + '">' + esc(x) + '</span>'; }).join(' '); };
+  var pl = '<h2>' + dot('var(--bad)') + '클래스 오픈 · 마감 (1주차 = 마감)</h2><div class="list scroll"><table class="book"><tr><th>클래스</th><th class="num">마감(1주차)</th><th class="num">남은 날</th><th>메모</th></tr>' +
+    PR.classes.slice().sort(function(a,b){ return a.deadline < b.deadline ? -1 : 1; }).map(function(c){
+      var n = dd(c.deadline);
+      return '<tr><td style="min-width:160px"><b>' + esc(c.name) + '</b> <span class="chip' + (c.kind === '무료특강' ? ' t-tr' : '') + '">' + esc(c.kind) + '</span></td><td class="num">' + md(c.deadline) + '</td>' +
+        '<td class="num"><b class="' + (n <= 3 && n >= 0 ? 'down' : '') + '">' + (n > 0 ? 'D-' + n : n === 0 ? '오늘' : '지남') + '</b></td><td class="sub" style="min-width:200px">' + esc(c.note) + '</td></tr>';
+    }).join('') + '</table></div><p class="hint">' + esc(PR.source) + ' · ' + esc(PR.asOf) + ' 조회</p>';
+  var EV = {}; PR.events.forEach(function(e){ (EV[e.date] = EV[e.date] || []).push(e.title); });
+  var weeks = {}; PR.days.forEach(function(x){ var d = new Date(x.date + 'T00:00:00'); var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7)); var k = mon.getFullYear() + '-' + String(mon.getMonth()+1).padStart(2,'0') + '-' + String(mon.getDate()).padStart(2,'0'); (weeks[k] = weeks[k] || []).push(x); });
+  pl += '<h2>' + dot('var(--accent)') + '매일 홍보 일정 · 하루 1건, 매번 다르게</h2>';
+  Object.keys(weeks).sort().forEach(function(k, wi){
+    var xs = weeks[k], lastD = xs[xs.length - 1].date, past = dd(lastD) < 0, cur = dd(k) <= 0 && dd(lastD) >= 0;
+    var body = '<div class="list">' + xs.map(function(x){
+      var c = PC[x.cls], n = dd(x.date), cd = dd(c.deadline);
+      return '<div class="item"' + (n < 0 ? ' style="opacity:.55"' : n === 0 ? ' style="background:var(--warn-bg)"' : '') + '><div class="body"><div class="t">' + md(x.date) + (n === 0 ? ' · 오늘' : '') + ' — ' + esc(c.name) + ' <span class="sub">(마감 ' + (cd >= 0 ? 'D-' + cd : '지남') + ')</span></div>' +
+        '<div class="note">' + esc(x.what) + '</div><div class="chips">' + chChip(x.channel) + (EV[x.date] ? EV[x.date].map(function(e){ return '<span class="chip">📅 ' + esc(e) + '</span>'; }).join('') : '') + '</div></div></div>';
+    }).join('') + '</div>';
+    var label = md(k).split(' ')[0] + ' 주' + (cur ? ' · 이번 주' : '');
+    var upcoming = Object.keys(weeks).sort().filter(function(w){ return dd(weeks[w][weeks[w].length - 1].date) >= 0; });
+    pl += !past && upcoming.indexOf(k) >= 0 && upcoming.indexOf(k) <= 1 ? '<h2 style="font-weight:500">' + label + '</h2>' + body : '<details class="fold" style="margin-top:10px"' + '><summary>' + label + ' · ' + xs.length + '건</summary><div style="margin-top:8px">' + body + '</div></details>';
+  });
+  pl += '<h2>' + dot('var(--muted-2)') + '광고 (상시)</h2><div class="list">' + PR.ads.map(function(a){ return item(null, a.what, md(a.from).split(' ')[0] + ' ~ ' + md(a.to).split(' ')[0]); }).join('') + '</div>';
+  pl += '<details class="fold"><summary>일정 짠 기준</summary><div class="list" style="margin-top:8px">' + PR.rules.map(function(n){ return item(null, '', n); }).join('') + '</div></details>';
+  pl += '<h2>' + dot('var(--accent)') + '날짜가 정해진 것</h2><div class="list">' + Object.keys(dg).sort().map(function(d){
     var diff = Math.round((new Date(d + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
     return '<div class="day-h">' + md(d) + (diff === 0 ? ' · 오늘' : diff > 0 ? ' · D-' + diff : ' · 지남') + '</div>' + dg[d].map(planItem).join('');
   }).join('') + '</div>';
@@ -383,6 +411,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     try { localStorage.setItem('work-check-tab', id); } catch (e) {}
   };
   tabs.addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) show(b.dataset.t); });
+  window.addEventListener('hashchange', function(){ var h = location.hash.slice(1); if (TABS.some(function(t){ return t[0] === h; })) { show(h); window.scrollTo(0, 0); } });
   var start = (location.hash || '').slice(1); if (!TABS.some(function(t){ return t[0] === start; })) { try { start = localStorage.getItem('work-check-tab'); } catch (e) {} }
   show(TABS.some(function(t){ return t[0] === start; }) ? start : 'report');
 
