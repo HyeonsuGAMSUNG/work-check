@@ -108,6 +108,16 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
 .copybar button{appearance:none;border:0;border-radius:8px;background:var(--accent);color:var(--accent-fg);font:inherit;font-weight:700;padding:8px 14px;cursor:pointer}
 .copybox{width:100%;margin-top:8px;min-height:90px;font:inherit;font-size:.8rem;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.adcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.adcard .shot{background:var(--chip-bg);aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.adcard .shot img{width:100%;height:100%;object-fit:contain;cursor:zoom-in}
+.adcard .shot .none{font-size:.75rem;color:var(--muted-2);text-align:center;padding:12px}
+.adcard .info{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.adcard .info b{font-size:.88rem}
+.adcard .copy{font-size:.74rem;color:var(--muted);white-space:pre-line;border-left:2px solid var(--border);padding-left:8px}
+.zoom{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.zoom.on{display:flex}.zoom img{max-width:100%;max-height:100%;border-radius:8px}
 </style>
 </head>
 <body>
@@ -129,7 +139,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1792245653"></script>
+<script src="data.js?v=1792245654"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -277,6 +287,19 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
     '<div class="stat"><b>' + L.clicks + '</b><span>클릭' + (Pv ? ' · 전날 ' + Pv.clicks : '') + '</span></div>' +
     '<div class="stat"><b>' + won(L.cpc) + '</b><span>평균 CPC' + (Pv ? ' · 전날 ' + won(Pv.cpc) : '') + '</span></div>' +
     '<div class="stat"><b>' + esc(best ? C[best.campaign].name : '–') + '</b><span>CTR 1위 ' + (best ? best.ctr.toFixed(2) + '% (클릭 20건 이상 중)' : '') + '</span></div></div>';
+
+  var gp = []; A.campaigns.forEach(function(c){ var k = c.product || '기타'; if (gp.indexOf(k) < 0) gp.push(k); });
+  r += '<h2>' + dot('var(--accent)') + '광고 소재 미리보기 · 무엇을 보여주고 있나</h2>' + gp.map(function(pk){
+    var cs = A.campaigns.filter(function(c){ return (c.product || '기타') === pk; });
+    return '<h2 style="font-weight:500">' + esc(pk) + '</h2><div class="gallery">' + cs.map(function(c){
+      var ds = A.daily.filter(function(q){ return q.campaign === c.id && q.ctr != null; });
+      var lx = ds[ds.length - 1];
+      return '<div class="adcard"><div class="shot">' + (c.img ? '<img src="' + esc(c.img) + '" alt="' + esc(c.name) + ' 광고 화면" loading="lazy">' : '<div class="none">광고 화면 캡처 없음<br>캡처를 보내 주시면 추가</div>') + '</div>' +
+        '<div class="info"><b>' + esc(c.name) + '</b><div class="chips"><span class="chip">' + esc(c.channel || '') + '</span>' + (c.status ? '<span class="chip">' + esc(c.status) + '</span>' : '') + (c.start ? '<span class="chip">' + esc(c.start) + '~</span>' : '') + '</div>' +
+        '<div class="sub">' + esc(c.angle || '') + '</div>' + (c.copy ? '<div class="copy">' + esc(c.copy) + '</div>' : '') +
+        (lx ? '<div class="sub">최근 ' + md(lx.date) + ': CTR <b>' + lx.ctr.toFixed(2) + '%</b> · ' + lx.clicks + '클릭 · CPC ' + lx.cpc + '원</div>' : '') + '</div></div>';
+    }).join('') + '</div>';
+  }).join('');
 
   var products = []; A.campaigns.forEach(function(c){ var k = (c.product || '기타') + ' · ' + (c.channel || ''); if (products.indexOf(k) < 0) products.push(k); });
   r += products.map(function(pk){
@@ -488,6 +511,10 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   });
   refresh();
 })();
+</script>
+<div class="zoom" id="zoom"><img alt=""></div>
+<script>
+(function(){var z=document.getElementById('zoom');document.addEventListener('click',function(e){if(e.target.matches('.adcard .shot img')){z.querySelector('img').src=e.target.src;z.classList.add('on');}else if(e.target.closest('#zoom')){z.classList.remove('on');}});})();
 </script>
 </body>
 </html>
