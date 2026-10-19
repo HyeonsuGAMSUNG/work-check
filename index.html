@@ -139,7 +139,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1792245656"></script>
+<script src="data.js?v=1792376651"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -245,6 +245,18 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
         }).join('') + '</table></div>';
     });
     r += '<p class="hint">' + esc(RV.note) + '</p>';
+  }
+
+  // 스티비(이메일) 발송 성과: 오픈·클릭률과 발송 후 구매자 수
+  if (A.email) {
+    var EM = A.email;
+    r += '<h2>' + dot('var(--good)') + esc(EM.tool) + ' 발송 · ' + esc(EM.list) + '</h2><div class="list scroll"><table class="book"><tr><th>발송 · 제목 · 소구</th><th class="num">마감까지</th><th class="num">오픈율</th><th class="num">클릭률</th><th class="num">구매</th></tr>' +
+      EM.sends.map(function(x){
+        var plan = x.open == null;
+        return '<tr' + (plan ? ' style="background:var(--warn-bg)"' : '') + '><td style="min-width:260px;max-width:340px"><div class="t" style="font-size:.84rem">' + md(x.date) + (x.time ? ' ' + esc(x.time) : '') + (plan ? ' · 오늘 발송 예정' : '') + '</div>' +
+          '<div class="sub">' + esc(x.subject) + '</div>' + (x.subjectKo ? '<div class="sub">→ ' + esc(x.subjectKo) + '</div>' : '') + '<div class="note" style="margin-top:3px">' + esc(x.angle) + '</div></td>' +
+          '<td class="num">' + esc(x.dday) + '</td><td class="num">' + (plan ? '–' : '<b>' + x.open + '%</b>') + '</td><td class="num">' + (plan ? '–' : x.click + '%') + '</td><td class="num">' + (plan ? '–' : '<b style="font-size:1rem">' + x.buyers + '명</b>') + '</td></tr>';
+      }).join('') + '</table></div><div class="list" style="margin-top:8px">' + item(null, EM.insight) + '</div><p class="hint">' + esc(EM.note) + '</p>';
   }
 
   r += '<h2>' + dot('var(--accent)') + '광고 동향 · 무엇을 알게 됐나</h2><div class="list">' +
