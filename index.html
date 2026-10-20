@@ -132,6 +132,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
 </header>
 <main class="wrap">
   <section id="s-report"></section>
+  <section id="s-class"></section>
   <section id="s-remind"></section>
   <section id="s-daily"></section>
   <section id="s-consult"></section>
@@ -139,7 +140,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1792377369"></script>
+<script src="data.js?v=1792462513"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -350,6 +351,37 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   r += '<details class="fold"><summary>광고 수치 확인 필요</summary><div class="list" style="margin-top:8px">' + A.caveats.map(function(n){ return item(null, '', n); }).join('') + '</div><p class="hint">' + esc(A.metricsNote) + '</p></details>';
   document.getElementById('s-report').innerHTML = r;
 
+  /* ---------- 클래스별 마케팅 보고서: log 항목의 cls로 묶음 ---------- */
+  var CL = {}, clsOrder = [];
+  W.log.forEach(function(g){ g.items.forEach(function(a){
+    var k = a.cls || '공통·기타';
+    if (!CL[k]) { CL[k] = []; clsOrder.push(k); }
+    CL[k].push({g: g, a: a});
+  }); });
+  clsOrder.sort(function(a, b){ return a === '공통·기타' ? 1 : b === '공통·기타' ? -1 : CL[b].length - CL[a].length; });
+  var tagCnt = function(xs){ var t = {}; xs.forEach(function(x){ t[x.a.tag] = (t[x.a.tag] || 0) + 1; }); return Object.keys(t).map(function(k){ return '<span class="chip">' + esc(k) + ' ' + t[k] + '</span>'; }).join(''); };
+  var clsBody = function(k){
+    var xs = CL[k], byD = [], seen = {};
+    xs.forEach(function(x){ if (!seen[x.g.date]) { seen[x.g.date] = []; byD.push(x.g); } seen[x.g.date].push(x.a); });
+    var tests = k === '공통·기타' ? [] : A.tests.filter(function(t){ return (t.cls || '') === k || t.name.indexOf(k.replace(/^일본 /, '').replace(/ 1기$/, '')) >= 0; });
+    return '<div class="list">' + byD.map(function(g){
+      return '<div class="day-h">' + (g.undated ? esc(g.date) + ' · 날짜 미기록' : md(g.date)) + ' · ' + seen[g.date].length + '건</div>' +
+        seen[g.date].map(function(a){ return item(null, a.title, null, ['<span class="chip">' + esc(a.tag) + '</span>'].concat(a.why === '이유 미기록' ? ['<span class="chip old">이유 적어 주세요</span>'] : []), g.undated ? '' : (a.tag === '광고' ? adStat(g.date, a) : '') + whyRes(a)); }).join('');
+    }).join('') + '</div>' +
+    (tests.length ? '<h2 style="font-weight:500">' + esc(k) + ' · 테스트·정리</h2><div class="list">' + tests.map(function(t){
+      return '<div class="item"><div class="body"><div class="t">' + esc(t.name) + ' <span class="sub">' + esc(t.start) + '~</span></div>' +
+        '<div class="why"><b>가설</b><span>' + esc(t.why) + '</span></div>' +
+        t.variants.map(function(v){ return '<div class="note">· <b>' + esc(v.name) + '</b> — ' + esc(v.stat) + '</div>'; }).join('') +
+        '<div class="res"><b>결과</b><span>' + esc(t.result) + '</span></div></div></div>';
+    }).join('') + '</div>' : '');
+  };
+  var cl = '<div class="chips" style="margin:4px 0 8px">' + clsOrder.map(function(k, i){ return '<a class="chip" href="#cls-' + i + '" style="text-decoration:none;font-size:.78rem;padding:3px 10px">' + esc(k) + ' ' + CL[k].length + '</a>'; }).join('') + '</div>';
+  cl += clsOrder.map(function(k, i){
+    var head = '<h2 id="cls-' + i + '" style="scroll-margin-top:110px">' + dot(i === 0 ? 'var(--accent)' : 'var(--muted-2)') + esc(k) + ' · ' + CL[k].length + '건</h2><div class="chips" style="margin:0 0 6px">' + tagCnt(CL[k]) + '</div>';
+    return i < 3 ? head + clsBody(k) : '<details class="fold" style="margin-top:10px"><summary>' + esc(k) + ' · ' + CL[k].length + '건</summary><div style="margin-top:8px">' + clsBody(k) + '</div></details>';
+  }).join('') + '<p class="hint">클래스 구분은 일별 기록(log)의 cls 기준. 광고 항목에는 그날 비용·CTR을 같이 표시합니다. 분류가 틀린 항목은 알려 주시면 옮기겠습니다.</p>';
+  document.getElementById('s-class').innerHTML = cl;
+
   /* ---------- 업무 리마인드 ---------- */
   var taskChips = function(t){
     var c = ['<span class="chip">' + esc(t.tag) + '</span>'];
@@ -493,7 +525,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   document.getElementById('s-plan').innerHTML = pl;
 
   /* ---------- 탭 ---------- */
-  var TABS = [['report','광고 효율 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['consult','상담 전환'],['promo','홍보 일정'],['plan','광고 마케팅 예정']];
+  var TABS = [['report','광고 효율 보고서'],['class','클래스별 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['consult','상담 전환'],['promo','홍보 일정'],['plan','광고 마케팅 예정']];
   var tabs = document.getElementById('tabs');
   tabs.innerHTML = TABS.map(function(t){ return '<button role="tab" type="button" data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
   var show = function(id){
