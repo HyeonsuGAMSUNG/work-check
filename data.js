@@ -238,6 +238,62 @@ window.WORK = {
    "note": "광고·상세 페이지·공지 문구의 모집 마감 날짜 바꾸기",
    "since": "10/16",
    "due": "10/19"
+  },
+  {
+   "id": "t29",
+   "group": "today",
+   "tag": "홍보",
+   "title": "X·Threads·TikTok 계정 신규 개설 + 게시글 올리기",
+   "since": "10/21"
+  },
+  {
+   "id": "t30",
+   "group": "today",
+   "tag": "광고",
+   "title": "초급반 광고 집행",
+   "since": "10/21"
+  },
+  {
+   "id": "t31",
+   "group": "today",
+   "tag": "광고",
+   "title": "트랙디자인 광고 집행",
+   "since": "10/21"
+  },
+  {
+   "id": "t32",
+   "group": "today",
+   "tag": "광고",
+   "title": "AI 아티스트 무료특강 광고 집행",
+   "since": "10/21"
+  },
+  {
+   "id": "t33",
+   "group": "today",
+   "tag": "영상",
+   "title": "미국 쇼츠 검증받기",
+   "since": "10/21"
+  },
+  {
+   "id": "t34",
+   "group": "today",
+   "tag": "홍보",
+   "title": "홍보 VOD 카톡방별 랜딩 다른 것 클릭 수 체크",
+   "since": "10/21"
+  },
+  {
+   "id": "t35",
+   "group": "today",
+   "tag": "일정",
+   "title": "진저브레드·벤사마마용 글로벌 프로듀서 1기 스케줄 정리",
+   "since": "10/21"
+  },
+  {
+   "id": "t36",
+   "group": "today",
+   "tag": "수업",
+   "title": "수노 수업 종료 후 제출폼 결과지 전달",
+   "since": "10/21"
   }
  ],
  "doneCount": 31,
