@@ -133,6 +133,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
 <main class="wrap">
   <section id="s-report"></section>
   <section id="s-class"></section>
+  <section id="s-enroll"></section>
   <section id="s-remind"></section>
   <section id="s-daily"></section>
   <section id="s-consult"></section>
@@ -140,7 +141,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1792720305"></script>
+<script src="data.js?v=1793155782"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -382,6 +383,24 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   }).join('') + '<p class="hint">클래스 구분은 일별 기록(log)의 cls 기준. 광고 항목에는 그날 비용·CTR을 같이 표시합니다. 분류가 틀린 항목은 알려 주시면 옮기겠습니다.</p>';
   document.getElementById('s-class').innerHTML = cl;
 
+  /* ---------- 모집현황: 아임웹 API 자동 수집 ---------- */
+  if (W.enrollment) {
+    var EN = W.enrollment, ENC = ['한국','일본','중국','미국'];
+    var enSynced = new Date(EN.syncedAt);
+    var en = '<div class="sync" style="margin-bottom:8px">마지막 수집 ' + (enSynced.getMonth()+1) + '/' + enSynced.getDate() + ' ' + String(enSynced.getHours()).padStart(2,'0') + ':' + String(enSynced.getMinutes()).padStart(2,'0') + ' (아임웹 API 자동)</div>';
+    en += '<div class="stats">' + [[EN.courses.length,'집계된 강의 수'],[EN.courses.reduce(function(a,c){ return a + c.total; }, 0),'전체 인원(중복제거)']]
+      .map(function(x){ return '<div class="stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('') + '</div>';
+    en += '<h2>' + dot('var(--accent)') + '강의별 국가 인원</h2><div class="list scroll"><table><tr><th>강의</th>' +
+      ENC.map(function(c){ return '<th class="num">' + c + '</th>'; }).join('') + '<th class="num">합계</th></tr>' +
+      EN.courses.map(function(c){
+        return '<tr><td><b>' + esc(c.display) + '</b></td>' +
+          ENC.map(function(cn){ return '<td class="num">' + (c.byCountry[cn] ? c.byCountry[cn] : '<span class="sub">–</span>') + '</td>'; }).join('') +
+          '<td class="num"><b>' + c.total + '</b></td></tr>';
+      }).join('') + '</table></div>';
+    en += '<p class="hint">아임웹 Rest API에서 매일 11시 자동 수집 · 번호+이름+이메일 기준 중복제거 · 상품명으로 강의 자동 분류(분류가 틀리면 알려주세요)</p>';
+    document.getElementById('s-enroll').innerHTML = en;
+  }
+
   /* ---------- 업무 리마인드 ---------- */
   var taskChips = function(t){
     var c = ['<span class="chip">' + esc(t.tag) + '</span>'];
@@ -525,7 +544,7 @@ details.fold summary{cursor:pointer;font-size:.84rem;font-weight:700;color:var(-
   document.getElementById('s-plan').innerHTML = pl;
 
   /* ---------- 탭 ---------- */
-  var TABS = [['report','광고 효율 보고서'],['class','클래스별 보고서'],['remind','업무 리마인드'],['daily','일간 업무'],['consult','상담 전환'],['promo','홍보 일정'],['plan','광고 마케팅 예정']];
+  var TABS = [['report','광고 효율 보고서'],['class','클래스별 보고서'],['enroll','모집현황'],['remind','업무 리마인드'],['daily','일간 업무'],['consult','상담 전환'],['promo','홍보 일정'],['plan','광고 마케팅 예정']];
   var tabs = document.getElementById('tabs');
   tabs.innerHTML = TABS.map(function(t){ return '<button role="tab" type="button" data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
   var show = function(id){
