@@ -141,6 +141,10 @@ details.fold > summary:hover{border-color:var(--accent)}
 .empty{padding:18px 16px;color:var(--muted);font-size:.85rem}
 
 /* 홍보 일정: 클래스 마감 D-day 칸 (스케쥴 사이트 D-day 페이지와 같은 모양) */
+.mdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.mkf button.chip{font:inherit;font-size:.78rem;font-weight:700;padding:5px 12px;cursor:pointer}
+.mkf button.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.item[hidden],.day-h[hidden]{display:none}
 .dbox{flex:none;min-width:84px;text-align:center}
 .dbox .dn{font-family:var(--mono);font-weight:600;font-size:.95rem;border-radius:9px;padding:5px 6px;background:var(--chip-bg);border:1px solid var(--border);font-variant-numeric:tabular-nums}
 .dbox .dn.hot{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
@@ -556,31 +560,29 @@ details.fold > summary:hover{border-color:var(--accent)}
   PR.classes.forEach(function(c){ PC[c.key] = c; });
   var CHC = {'카톡':'t-ld','커뮤니티':'t-tr','스티비':'ok','광고':'t-bo'};
   var chChip = function(ch){ return ch.split(' + ').map(function(x){ return '<span class="chip ' + (CHC[x] || '') + '">' + esc(x) + '</span>'; }).join(' '); };
-  // 클래스: 국가(한중일/한국/중국/일본) 블록 → 그 안에서 모집 중 / 오픈 예정 / 마감. 마감 = 노션 1주차(또는 판매 페이지 마감일)
+  // 클래스: 국가 구분 없이 마감이 급한 순(D-n 오름차순)으로 한 줄. 국가는 칩으로 표시하고 위 칩으로 거른다. 마감 = 노션 1주차(또는 판매 페이지 마감일)
   var MKS = ['한중일','한국','중국','일본'], MKC = {'한중일':'var(--bad)','한국':'var(--good)','중국':'var(--warn)','일본':'var(--accent)'};
   var stOf = function(c){ return dd(c.deadline) < 0 ? 'closed' : c.status === 'upcoming' ? 'upcoming' : 'open'; };
-  var STG = [['open','모집 중','ok'],['upcoming','오픈 예정','old'],['closed','마감 · 수업 진행 중','']];
+  var mkChip = function(m){ return '<span class="chip"><span class="mdot" style="background:' + (MKC[m] || 'var(--muted-2)') + '"></span>' + esc(m) + '</span>'; };
   var clsRow = function(c){
     var n = dd(c.deadline), st = stOf(c), urgent = st !== 'closed' && n <= 3;
     var badge = st === 'closed' ? '마감' : n === 0 ? '오늘 마감' : 'D-' + n;
-    return '<div class="item" style="align-items:center' + (st === 'closed' ? ';opacity:.6' : '') + '"><div class="body"><div class="t"><b>' + esc(c.name) + '</b></div>' +
-      '<div class="note">' + esc(c.note) + '</div><div class="chips"><span class="chip' + (c.kind === '무료특강' ? ' t-tr' : '') + '">' + esc(c.kind) + '</span>' + (c.open ? '<span class="chip">오픈 ' + md(c.open).split(' ')[0] + '</span>' : '') + '</div></div>' +
+    return '<div class="item" data-mk="' + esc(c.mk) + '" style="align-items:center;box-shadow:inset 4px 0 0 ' + (MKC[c.mk] || 'var(--border)') + (st === 'closed' ? ';opacity:.6' : '') + '"><div class="body"><div class="t"><b>' + esc(c.name) + '</b></div>' +
+      '<div class="note">' + esc(c.note) + '</div><div class="chips">' + mkChip(c.mk) + (st === 'upcoming' ? '<span class="chip old">오픈 예정</span>' : '') + '<span class="chip' + (c.kind === '무료특강' ? ' t-tr' : '') + '">' + esc(c.kind) + '</span>' + (c.open ? '<span class="chip">오픈 ' + md(c.open).split(' ')[0] + '</span>' : '') + '</div></div>' +
       '<div class="dbox"><div class="dn' + (urgent ? ' hot' : st !== 'closed' && n <= 7 ? ' warm' : '') + '">' + badge + '</div><span class="sub">마감 ' + md(c.deadline) + '</span></div></div>';
   };
-  var sorted = PR.classes.slice().sort(function(a,b){ return a.deadline < b.deadline ? -1 : 1; });
-  var pr = '<h2>' + dot('var(--bad)') + '클래스 오픈 · 마감 (1주차 = 마감)</h2>' +
-    '<div class="chips" style="margin:0 0 4px">' + MKS.map(function(m){ var k = sorted.filter(function(c){ return c.mk === m && stOf(c) !== 'closed'; }).length; return '<a class="chip" href="#mk-' + m + '" style="text-decoration:none;font-size:.78rem;padding:3px 10px"><span class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + MKC[m] + ';margin-right:5px"></span>' + m + ' ' + k + '</a>'; }).join('') + '</div>' +
-    MKS.map(function(m){
-      var cs = sorted.filter(function(c){ return c.mk === m; });
-      if (!cs.length) return '';
-      var live = cs.filter(function(c){ return stOf(c) !== 'closed'; }).length;
-      return '<h2 id="mk-' + m + '" style="scroll-margin-top:150px">' + dot(MKC[m]) + m + ' <span class="sub" style="font-weight:500">모집 중·예정 ' + live + '개</span></h2><div class="list" style="border-left:4px solid ' + MKC[m] + '">' +
-        STG.map(function(g){
-          var xs = cs.filter(function(c){ return stOf(c) === g[0]; });
-          if (g[0] === 'closed') xs.reverse();
-          return xs.length ? '<div class="day-h"><span class="chip ' + g[2] + '">' + g[1] + '</span> ' + xs.length + '개</div>' + xs.map(clsRow).join('') : '';
-        }).join('') + '</div>';
-    }).join('') + '<p class="hint">' + esc(PR.source) + ' · 중국·일본 초급반은 판매 페이지 마감일 · ' + esc(PR.asOf) + ' 조회. 오픈 예정은 오픈일을 알려 주시면 넣겠습니다.</p>';
+  var sorted = PR.classes.slice().sort(function(a,b){ return a.deadline < b.deadline ? -1 : a.deadline > b.deadline ? 1 : 0; });
+  var live = sorted.filter(function(c){ return stOf(c) !== 'closed'; }), closed = sorted.filter(function(c){ return stOf(c) === 'closed'; }).reverse();
+  // 급한 정도 구간: 3일 이내 / 7일 이내 / 그 이후
+  var BANDS = [['D-3 이내 · 지금 홍보', 0, 3, 'due'], ['D-7 이내 · 이번 주', 4, 7, 'old'], ['D-8 이후', 8, 1e9, '']];
+  var pr = '<h2>' + dot('var(--bad)') + '클래스 마감 · 급한 순 (1주차 = 마감)</h2>' +
+    '<div class="chips mkf" id="mkf"><button type="button" class="chip on" data-mk="">전체 ' + live.length + '</button>' + MKS.map(function(m){ var k = live.filter(function(c){ return c.mk === m; }).length; return '<button type="button" class="chip" data-mk="' + m + '"><span class="mdot" style="background:' + MKC[m] + '"></span>' + m + ' ' + k + '</button>'; }).join('') + '</div>' +
+    '<div class="list" id="clsList" style="margin-top:10px">' + BANDS.map(function(b){
+      var xs = live.filter(function(c){ var n = dd(c.deadline); return n >= b[1] && n <= b[2]; });
+      return xs.length ? '<div class="day-h" data-band><span class="chip ' + b[3] + '">' + b[0] + '</span> <span class="bn">' + xs.length + '</span>개</div>' + xs.map(clsRow).join('') : '';
+    }).join('') + '<div class="empty" id="clsEmpty" hidden>이 국가는 모집 중·예정 클래스가 없어요.</div></div>' +
+    (closed.length ? '<details class="fold" style="margin-top:10px"><summary>마감 · 수업 진행 중 ' + closed.length + '개</summary><div class="list" style="margin-top:8px">' + closed.map(clsRow).join('') + '</div></details>' : '') +
+    '<p class="hint">' + esc(PR.source) + ' · 중국·일본 초급반은 판매 페이지 마감일 · ' + esc(PR.asOf) + ' 조회. 오픈 예정은 오픈일을 알려 주시면 넣겠습니다.</p>';
   var EV = {}; PR.events.forEach(function(e){ (EV[e.date] = EV[e.date] || []).push(e.title); });
   var weeks = {}; PR.days.forEach(function(x){ var d = new Date(x.date + 'T00:00:00'); var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7)); var k = mon.getFullYear() + '-' + String(mon.getMonth()+1).padStart(2,'0') + '-' + String(mon.getDate()).padStart(2,'0'); (weeks[k] = weeks[k] || []).push(x); });
   pr += '<h2>' + dot('var(--accent)') + '매일 홍보 일정 · 하루 1건, 매번 다르게</h2>';
@@ -598,6 +600,21 @@ details.fold > summary:hover{border-color:var(--accent)}
   pr += '<h2>' + dot('var(--muted-2)') + '광고 (상시)</h2><div class="list">' + PR.ads.map(function(a){ return item(null, a.what, md(a.from).split(' ')[0] + ' ~ ' + md(a.to).split(' ')[0]); }).join('') + '</div>';
   pr += '<details class="fold"><summary>일정 짠 기준</summary><div class="list" style="margin-top:8px">' + PR.rules.map(function(n){ return item(null, '', n); }).join('') + '</div></details>';
   document.getElementById('s-promo').innerHTML = pr;
+  // 국가 칩: 누르면 그 국가만 (구간 머리의 개수도 다시 셈)
+  document.getElementById('mkf').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    var mk = b.dataset.mk, list = document.getElementById('clsList'), shown = 0;
+    [].forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); });
+    var head = null, hn = 0;
+    var flush = function(){ if (head) { head.hidden = !hn; head.querySelector('.bn').textContent = hn; } };
+    [].forEach.call(list.children, function(el){
+      if (el.hasAttribute('data-band')) { flush(); head = el; hn = 0; return; }
+      if (!el.dataset.mk) return;
+      var ok = !mk || el.dataset.mk === mk; el.hidden = !ok; if (ok) { hn++; shown++; }
+    });
+    flush();
+    document.getElementById('clsEmpty').hidden = shown > 0;
+  });
   var pl = '<h2>' + dot('var(--accent)') + '날짜가 정해진 것</h2><div class="list">' + Object.keys(dg).sort().map(function(d){
     var diff = Math.round((new Date(d + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
     return '<div class="day-h">' + md(d) + (diff === 0 ? ' · 오늘' : diff > 0 ? ' · D-' + diff : ' · 지남') + '</div>' + dg[d].map(planItem).join('');
