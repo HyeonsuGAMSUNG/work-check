@@ -157,6 +157,45 @@ details.fold > summary:hover{border-color:var(--accent)}
 .copybar .in{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.82rem;font-weight:700}
 .copybar button{appearance:none;border:1px solid var(--accent);border-radius:10px;background:var(--accent);color:var(--accent-fg);font:inherit;font-weight:800;padding:8px 14px;cursor:pointer}
 .copybox{width:100%;margin-top:8px;min-height:90px;font:inherit;font-size:.8rem;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:9px;padding:8px}
+/* 업무 리마인드: 요약 칩 + 그룹 카드(왼쪽 색 띠) + 촘촘한 체크 줄 */
+.jump{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.jump a{display:inline-flex;align-items:baseline;gap:5px;text-decoration:none;font-size:.78rem;font-weight:700;color:var(--fg);background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;padding:6px 11px}
+.jump a b{font-family:var(--mono);font-size:1rem;font-weight:600;color:var(--c)}
+.jump a:hover{border-color:var(--c)}
+.tcard{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);border-radius:14px;margin-top:14px;overflow:hidden;scroll-margin-top:150px}
+.tcard.hero{border-width:2px 2px 2px 6px;border-color:var(--c);box-shadow:0 2px 10px rgba(192,57,63,.10)}
+.tcard .th{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:11px 14px 9px;border-bottom:1px solid var(--border)}
+.tcard .th h2{margin:0;font-size:1.02rem;font-weight:900;color:var(--c)}
+.tcard.hero .th{background:var(--bad-bg)}
+.tcard.hero .th h2{font-size:1.15rem}
+.tcount{font-family:var(--mono);font-size:.74rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.tcount.alldone{color:var(--good)}
+.trow{display:flex;gap:10px;align-items:flex-start;padding:9px 14px;border-top:1px solid var(--border);cursor:pointer}
+.th + .trow{border-top:0}
+.trow:hover{background:var(--chip-bg)}
+.trow input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--accent)}
+.trow .tb{flex:1;min-width:0;display:flex;flex-direction:column}
+.tt{font-size:.92rem;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.tcard.hero .tt{font-size:.97rem;font-weight:700}
+.tn{display:block;font-size:.76rem;color:var(--muted);line-height:1.45;margin-top:2px;overflow-wrap:anywhere}
+.tn.warnx{color:var(--warn);font-weight:600}
+.trow .tg{flex:none;display:flex;gap:4px;align-items:center;margin-top:1px}
+.trow.local .tt{text-decoration:line-through;color:var(--muted-2)}
+.trow.local{opacity:.7}
+.tcard.grid2{display:grid;grid-template-columns:1fr 1fr}
+.tcard.grid2 .th{grid-column:1/-1}
+.tcard.grid2 .trow:nth-child(3){border-top:0}
+.tcard.grid2 .trow .tg{display:none}
+table.rv td,table.rv th{padding:9px 12px}
+table.rv td:first-child{min-width:150px}
+table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
+@media (max-width:480px){
+  .tcard.grid2{grid-template-columns:1fr}
+  .tcard.grid2 .trow:nth-child(3){border-top:1px solid var(--border)}
+  .trow{padding:9px 12px}
+  .trow .tg .chip:not(.due){display:none}
+  table.rv td:not(:first-child),table.rv th:not(:first-child){width:auto}
+}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto;transition:none!important}}
 
 /* 광고 소재 미리보기 */
@@ -207,7 +246,7 @@ details.fold > summary:hover{border-color:var(--accent)}
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1793690100"></script>
+<script src="data.js?v=1793690200"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -476,14 +515,33 @@ details.fold > summary:hover{border-color:var(--accent)}
     if (t.flag === 'stale') c.push('<span class="chip old">낡은 항목?</span>');
     return c;
   };
-  var GROUPS = [['today','오늘 꼭','var(--bad)'],['week','이번 주 안에','var(--warn)'],['wait','대기 · 급하지 않음','var(--muted-2)']];
-  var cnt = function(g){ return W.tasks.filter(function(t){ return t.group === g; }).length; };
-  var m = '<div class="stats">' + [[W.tasks.length,'미완료'],[cnt('today'),'오늘 꼭'],[cnt('week'),'이번 주 안에'],[W.missing.filter(function(x){ return x.kind === 'check'; }).length,'누락 후보']]
-    .map(function(x){ return '<div class="stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('') + '</div>';
-  m += GROUPS.map(function(g){
-    var ts = W.tasks.filter(function(t){ return t.group === g[0]; });
-    return ts.length ? '<h2>' + dot(g[2]) + g[1] + ' · ' + ts.length + '</h2><div class="list">' + ts.map(function(t){ return item(t.id, t.title, t.note, taskChips(t)); }).join('') + '</div>' : '';
-  }).join('');
+  // 한눈에: 위쪽 요약 칩(눌러서 이동) → 오늘 꼭 / 오늘 공지 / 매일 루틴 / 검수자 배정표 / 이번 주 / 넘어온 것 순서. 예전 자료는 맨 아래 접기
+  var GROUPS = [['today','오늘 꼭','var(--bad)','오늘 꼭'],['notice','오늘 공지·발송','var(--accent)','공지'],['routine','매일 루틴','var(--good)','루틴'],['week','이번 주 안에','var(--warn)','이번 주'],['carry','어제·지난주에서 넘어온 것','var(--muted-2)','넘어온 것'],['wait','대기 · 급하지 않음','var(--muted-2)','대기']];
+  var tasksOf = function(g){ return W.tasks.filter(function(t){ return t.group === g; }); };
+  var R = W.reviewers, rvOpen = R ? R.rows.reduce(function(a, r){ return a + (r.cn ? 0 : 1) + (r.jp ? 0 : 1); }, 0) : 0;
+  var row = function(t){
+    return '<label class="trow' + (local[t.id] ? ' local' : '') + '"><input type="checkbox" data-id="' + esc(t.id) + '" data-title="' + esc(t.title) + '"' + (local[t.id] ? ' checked' : '') + '>' +
+      '<span class="tb"><span class="tt">' + esc(t.title) + '</span>' + (t.note ? '<span class="tn">' + esc(t.note) + '</span>' : '') + '</span>' +
+      '<span class="tg">' + (t.due ? '<span class="chip due">~' + esc(t.due) + '</span>' : '') + '<span class="chip">' + esc(t.tag) + '</span></span></label>';
+  };
+  var card = function(g){
+    var ts = tasksOf(g[0]); if (!ts.length) return '';
+    return '<div class="tcard' + (g[0] === 'today' ? ' hero' : '') + (g[0] === 'routine' ? ' grid2' : '') + '" id="r-' + g[0] + '" style="--c:' + g[2] + '">' +
+      '<div class="th"><h2>' + g[1] + '</h2><span class="tcount" data-g="' + g[0] + '"></span></div>' + ts.map(row).join('') + '</div>';
+  };
+  var m = '<div class="jump">' + GROUPS.filter(function(g){ return tasksOf(g[0]).length; }).map(function(g){
+    return '<a href="#r-' + g[0] + '" style="--c:' + g[2] + '"><b>' + tasksOf(g[0]).length + '</b>' + g[3] + '</a>';
+  }).join('') + (R ? '<a href="#r-rev" style="--c:var(--warn)"><b>' + rvOpen + '</b>검수 미정</a>' : '') + '</div>';
+  m += card(GROUPS[0]) + card(GROUPS[1]) + card(GROUPS[2]);
+  if (R) {
+    var cell = function(v, note){ return v === '불필요' ? '<span class="sub">불필요</span>' : v ? '<span class="chip ok">' + esc(v) + '</span>' : '<span class="chip due">미정</span>' + (note ? '<span class="tn">' + esc(note) + '</span>' : ''); };
+    m += '<div class="tcard" id="r-rev" style="--c:var(--warn)"><div class="th"><h2>검수자 배정</h2><span class="tcount">미정 ' + rvOpen + '자리 · ' + esc(md(R.date)) + ' 기준</span></div>' +
+      '<div class="scroll"><table class="rv"><tr><th>수업</th><th>중국</th><th>일본</th></tr>' + R.rows.map(function(r){
+        return '<tr><td><b>' + esc(r.cls) + '</b><span class="tn">' + esc(r.when) + '</span>' + (r.note ? '<span class="tn warnx">⚠ ' + esc(r.note) + '</span>' : '') + '</td><td>' + cell(r.cn, r.cnNote) + '</td><td>' + cell(r.jp, r.jpNote) + '</td></tr>';
+      }).join('') + '</table></div></div>';
+  }
+  m += GROUPS.slice(3).map(card).join('');
+  m += '<details class="fold"><summary>예전 자료 · 진행 클래스 · 다가오는 일정 · 누락 점검</summary>';
   if (W.projects) {
     var PJ = W.projects.items.slice().sort(function(a,b){ return (a.lecture || a.open || '9') < (b.lecture || b.open || '9') ? -1 : 1; });
     m += '<h2>' + dot('var(--accent)') + '진행·예정 클래스와 프로젝트</h2><div class="list">' + PJ.map(function(p){
@@ -499,11 +557,18 @@ details.fold > summary:hover{border-color:var(--accent)}
     return '<div class="day-h">' + md(d) + '</div>' + byDay[d].map(function(e){ return item(null, (e.time ? e.time + ' · ' : '') + e.title); }).join('');
   }).join('') + '</div>';
   var mk = function(k){ return W.missing.filter(function(x){ return x.kind === k; }); };
-  m += '<details class="fold"><summary>누락 점검 · 예전 페이지에서 체크 없이 사라진 ' + mk('check').length + '개</summary><div class="list" style="margin-top:8px">' +
+  m += '<h2 class="minor">누락 점검 · 예전 페이지에서 체크 없이 사라진 ' + mk('check').length + '개</h2><div class="list">' +
     mk('check').map(function(x, i){ return item('m' + i, x.title, x.note, ['<span class="chip">마지막: ' + esc(x.lastSeen) + '</span>']); }).join('') + '</div>' +
-    '<p class="hint">날짜가 지난 것으로 보이는 ' + mk('expired').length + '개: ' + mk('expired').map(function(x){ return esc(x.title); }).join(' / ') + '</p></details>';
+    '<p class="hint">날짜가 지난 것으로 보이는 ' + mk('expired').length + '개: ' + mk('expired').map(function(x){ return esc(x.title); }).join(' / ') + '</p><p class="hint">진행 클래스·일정·누락 점검은 10/14 노션 기준이에요.</p></details>';
   m += '<p class="hint">체크는 이 브라우저에만 남습니다. "완료 목록 복사"로 클로드에게 붙여 넣으면 노션과 사이트에 반영합니다.</p>';
   document.getElementById('s-remind').innerHTML = m;
+  var countUp = function(){
+    [].forEach.call(document.querySelectorAll('.tcount[data-g]'), function(el){
+      var ts = tasksOf(el.dataset.g), n = ts.filter(function(t){ return local[t.id]; }).length;
+      el.textContent = n + ' / ' + ts.length + ' 완료'; el.classList.toggle('alldone', n === ts.length);
+    });
+  };
+  countUp(); document.addEventListener('change', function(e){ if (e.target.closest('#s-remind')) setTimeout(countUp, 0); });
 
   /* ---------- 일간 업무: 담당 업무 리스트 + 일별 한 일 ---------- */
   // 주기가 '상시'인 업무는 매일 하는 일이라 월요일~오늘까지 자동 체크
@@ -644,7 +709,7 @@ details.fold > summary:hover{border-color:var(--accent)}
   document.addEventListener('change', function(e){
     var cb = e.target; if (!cb.dataset || !cb.dataset.id) return;
     if (cb.checked) local[cb.dataset.id] = cb.dataset.title; else delete local[cb.dataset.id];
-    cb.closest('.item').classList.toggle('local', cb.checked); save(); refresh();
+    cb.closest('.item, .trow').classList.toggle('local', cb.checked); save(); refresh();
   });
   document.getElementById('copybtn').addEventListener('click', function(){
     var txt = '노션 ' + W.meta.dayPage.title + ' 페이지에서 아래 항목 완료 체크해줘:\n' + Object.keys(local).map(function(k){ return '- ' + local[k]; }).join('\n');
