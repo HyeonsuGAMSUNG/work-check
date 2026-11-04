@@ -1,14 +1,14 @@
 // 노션 주간업무 스냅샷. 예약작업 work-site-notion-sync 가 덮어쓴다. 손으로 고치지 말 것.
 window.WORK = {
  "meta": {
-  "syncedAt": "2026-11-03T15:30:00+09:00",
+  "syncedAt": "2026-11-04T10:30:00+09:00",
   "weekPage": {
    "title": "주간 업무 : 남현수 1102 월",
    "url": "https://app.notion.com/p/40cdb3fde2ad81588fc9d0e76c5b9fe4"
   },
   "dayPage": {
-   "title": "261103 화",
-   "url": "https://app.notion.com/p/40cdb3fde2ad818dad78c88d1449a608"
+   "title": "261104 수",
+   "url": "https://app.notion.com/p/40edb3fde2ad814fbf58dd495fe0a741"
   },
   "pagesRead": [
    "261014 수",
@@ -28,22 +28,38 @@ window.WORK = {
  },
  "tasks": [
   {
-   "id": "t01",
+   "id": "d01",
    "group": "today",
+   "tag": "공지",
+   "title": "조던쇼 투어스 3곡 참여 공지",
+   "note": "TWS 'TO US'(11/2) 수록곡 3곡 전부: 내 이름을 불러줘 · 위 업(WE UP) · 헤비(heavy) · 멜론·벅스 크레딧 최종 확인 후",
+   "since": "11/4"
+  },
+  {
+   "id": "d02",
+   "group": "today",
+   "tag": "확인",
+   "title": "조던쇼 연말까지 발매 예정곡 몇 곡·무엇인지 확인",
+   "note": "미발매라 공개 자료 없음 → 조던쇼 측·미감PD님께 문의",
+   "since": "11/4"
+  },
+  {
+   "id": "t01",
+   "group": "carry",
    "tag": "15기",
    "title": "15기 커리큘럼 확인",
    "since": "11/3"
   },
   {
    "id": "t02",
-   "group": "today",
+   "group": "carry",
    "tag": "일정",
    "title": "성준님께 해외 탑라이너 일정 확인",
    "since": "11/3"
   },
   {
    "id": "t03",
-   "group": "today",
+   "group": "carry",
    "tag": "행사",
    "title": "치킨 모임(12/12) 중국 수강생 처리 정하기",
    "note": "공지 올리기 전에",
@@ -51,51 +67,36 @@ window.WORK = {
   },
   {
    "id": "t04",
-   "group": "today",
+   "group": "carry",
    "tag": "SNS",
    "title": "X 일본 계정(@gamsungsound_jp) 게시글 올리기",
    "since": "11/3"
   },
   {
    "id": "t05",
-   "group": "today",
+   "group": "carry",
    "tag": "SNS",
    "title": "틱톡 계정 개설 → 쇼츠 그대로 올리기",
    "since": "11/3"
   },
   {
    "id": "t06",
-   "group": "today",
+   "group": "carry",
    "tag": "영상",
    "title": "레노 영상 하나 더 만들기",
    "since": "11/3"
   },
   {
    "id": "t07",
-   "group": "today",
+   "group": "carry",
    "tag": "일정",
    "title": "선휘님과 상의: 레노 1/11 → 1/14 이동",
    "note": "1/11이 히트메이커스와 겹침 · 옮기면 1/14 최하겸 수업은 다른 날로",
    "since": "11/3"
   },
   {
-   "id": "n01",
-   "group": "notice",
-   "tag": "정규방",
-   "title": "히트 작사 특강 시작 D-2 공지",
-   "note": "정규방 등에서만 · 오늘 영상 홍보하는 원프방 등은 빼기",
-   "since": "11/3"
-  },
-  {
-   "id": "n02",
-   "group": "notice",
-   "tag": "15기 방",
-   "title": "15기 대면 수업 전날 공지",
-   "since": "11/3"
-  },
-  {
    "id": "n03",
-   "group": "notice",
+   "group": "carry",
    "tag": "알리고",
    "title": "1순위: 선택받는 곡의 비밀 링크 + 영상 → 15기·글로벌 프로듀서 1기",
    "note": "미신청자 83명 · 먼저 발송 (11/3 최신 명단·HM2 최종 신청자 기준)",
@@ -103,7 +104,7 @@ window.WORK = {
   },
   {
    "id": "n04",
-   "group": "notice",
+   "group": "carry",
    "tag": "알리고",
    "title": "2순위: 같은 내용 → 이전 마스터클래스 구매자",
    "note": "266명",
@@ -111,7 +112,7 @@ window.WORK = {
   },
   {
    "id": "n08",
-   "group": "notice",
+   "group": "carry",
    "tag": "알리고",
    "title": "3순위: 같은 내용 → 나머지 졸업자",
    "note": "918명 · 세 명단 모두 HM2 신청자 제외",
@@ -119,25 +120,10 @@ window.WORK = {
   },
   {
    "id": "n05",
-   "group": "notice",
+   "group": "carry",
    "tag": "대기",
    "title": "시크릿 세미나(11/28) 링크 + 영상 — 대기",
    "note": "신규 가입자 쿠폰 설문 응답 중 프로 지향만 · 인원은 설문 후",
-   "since": "11/3"
-  },
-  {
-   "id": "n06",
-   "group": "notice",
-   "tag": "클로드",
-   "title": "발송 직전 최신 HM2 구매자 명단으로 1·2·3순위 다시 거르기",
-   "since": "11/3"
-  },
-  {
-   "id": "n07",
-   "group": "notice",
-   "tag": "커뮤니티",
-   "title": "080 수신거부자용 공지",
-   "note": "유튜브 커뮤니티 + 마스터클래스 카톡방",
    "since": "11/3"
   },
   {
