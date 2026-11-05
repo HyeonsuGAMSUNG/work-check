@@ -1,14 +1,14 @@
 // 노션 주간업무 스냅샷. 예약작업 work-site-notion-sync 가 덮어쓴다. 손으로 고치지 말 것.
 window.WORK = {
  "meta": {
-  "syncedAt": "2026-11-04T10:30:00+09:00",
+  "syncedAt": "2026-11-05T10:30:00+09:00",
   "weekPage": {
    "title": "주간 업무 : 남현수 1102 월",
    "url": "https://app.notion.com/p/40cdb3fde2ad81588fc9d0e76c5b9fe4"
   },
   "dayPage": {
-   "title": "261104 수",
-   "url": "https://app.notion.com/p/40edb3fde2ad814fbf58dd495fe0a741"
+   "title": "261105 목",
+   "url": "https://app.notion.com/p/40fdb3fde2ad81ccacd0cbd2b990e7e9"
   },
   "pagesRead": [
    "261014 수",
@@ -28,20 +28,76 @@ window.WORK = {
  },
  "tasks": [
   {
-   "id": "d01",
+   "id": "e01",
    "group": "today",
-   "tag": "공지",
-   "title": "조던쇼 투어스 3곡 참여 공지",
-   "note": "TWS 'TO US'(11/2) 수록곡 3곡 전부: 내 이름을 불러줘 · 위 업(WE UP) · 헤비(heavy) · 멜론·벅스 크레딧 최종 확인 후",
-   "since": "11/4"
+   "tag": "스티비",
+   "title": "트랙디자인 스티비 메일",
+   "note": "오늘 스티비에 히트메이커스 PREVIEW 메일도 있음 → 같은 날 2통인지 확인",
+   "since": "11/5"
   },
   {
-   "id": "d02",
+   "id": "e02",
+   "group": "today",
+   "tag": "미국",
+   "title": "미국 X 업로드",
+   "since": "11/5"
+  },
+  {
+   "id": "e03",
+   "group": "today",
+   "tag": "미국",
+   "title": "미국 인스타 업로드",
+   "since": "11/5"
+  },
+  {
+   "id": "e04",
    "group": "today",
    "tag": "확인",
    "title": "조던쇼 연말까지 발매 예정곡 몇 곡·무엇인지 확인",
-   "note": "미발매라 공개 자료 없음 → 조던쇼 측·미감PD님께 문의",
-   "since": "11/4"
+   "note": "조던쇼 측·미감PD님께 문의",
+   "since": "11/5"
+  },
+  {
+   "id": "e05",
+   "group": "notice",
+   "tag": "홍보",
+   "title": "오전: 히트메이커스 PREVIEW 무료특강",
+   "note": "오늘 7PM · 6PM 모집 종료",
+   "since": "11/5"
+  },
+  {
+   "id": "e06",
+   "group": "notice",
+   "tag": "홍보",
+   "title": "오후: 선휘팁",
+   "since": "11/5"
+  },
+  {
+   "id": "e07",
+   "group": "week",
+   "tag": "공지",
+   "title": "조던쇼 투어스 3곡 참여 공지",
+   "note": "11/6(금) 커뮤니티 '조던쇼를 잡아라 D-6' 글에 같이 · TO US 3곡(내 이름을 불러줘·WE UP·heavy) · 멜론·벅스 크레딧 확인",
+   "due": "11/6",
+   "since": "11/5"
+  },
+  {
+   "id": "e08",
+   "group": "week",
+   "tag": "공지",
+   "title": "넥스뮤즈(NEXMUSE 2027) 공모전 홍보",
+   "note": "주말 AI방·원프방·SUNO방 · 접수 마감일 AI ART 측 확인 · AI 아티스트 수업에서도 참여 독려",
+   "due": "11/8",
+   "since": "11/5"
+  },
+  {
+   "id": "e09",
+   "group": "week",
+   "tag": "공지",
+   "title": "치킨 모임(12/12) 공지",
+   "note": "주말 · 그 전에 중국 수강생 처리 정하기·폼 게시",
+   "due": "11/8",
+   "since": "11/5"
   },
   {
    "id": "t01",
@@ -3492,6 +3548,14 @@ window.WORK = {
    "why": "1·2차 각도(해외 작곡가 / avex 업계 진출) 중 구매가 더 나온 2차 쪽 메시지 + 마감 임박",
    "status": "예정",
    "est": false
+  },
+  {
+   "date": "2026-11-07",
+   "title": "넥스뮤즈(NEXMUSE 2027) AI 아이돌 공모전 홍보",
+   "channel": "카톡(AI방·원프방·SUNO방)",
+   "why": "감성사운드 주관·심사위원 참여. 참여자 대상 홍보 풀, AI ART가 AI 아티스트 수업에 뉴테이크AI 무료 2회, AI ART 음악 수업에 감성사운드 강사진. 많이 지원하게 하는 게 목표",
+   "status": "예정",
+   "est": true
   }
  ],
  "projects": {
