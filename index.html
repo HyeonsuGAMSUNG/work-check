@@ -246,7 +246,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1793870000"></script>
+<script src="data.js?v=1794210000"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -516,7 +516,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
     return c;
   };
   // 한눈에: 위쪽 요약 칩(눌러서 이동) → 오늘 꼭 / 오늘 공지 / 매일 루틴 / 검수자 배정표 / 이번 주 / 넘어온 것 순서. 예전 자료는 맨 아래 접기
-  var GROUPS = [['today','오늘 꼭','var(--bad)','오늘 꼭'],['notice','오늘 공지·발송','var(--accent)','공지'],['routine','매일 루틴','var(--good)','루틴'],['week','이번 주 안에','var(--warn)','이번 주'],['carry','어제·지난주에서 넘어온 것','var(--muted-2)','넘어온 것'],['wait','대기 · 급하지 않음','var(--muted-2)','대기']];
+  var GROUPS = [['today','오늘 꼭','var(--bad)','오늘 꼭'],['notice','오늘 공지·발송','var(--accent)','공지'],['routine','매일 루틴','var(--good)','루틴'],['week','이번 주 안에','var(--warn)','이번 주'],['carry','지난주 마감 · 체크 안 됨','var(--warn)','놓친 것'],['wait','대기 · 급하지 않음','var(--muted-2)','대기']];
   var tasksOf = function(g){ return W.tasks.filter(function(t){ return t.group === g; }); };
   var R = W.reviewers, rvOpen = R ? R.rows.reduce(function(a, r){ return a + (r.cn ? 0 : 1) + (r.jp ? 0 : 1); }, 0) : 0;
   var row = function(t){
@@ -532,7 +532,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
   var m = '<div class="jump">' + GROUPS.filter(function(g){ return tasksOf(g[0]).length; }).map(function(g){
     return '<a href="#r-' + g[0] + '" style="--c:' + g[2] + '"><b>' + tasksOf(g[0]).length + '</b>' + g[3] + '</a>';
   }).join('') + (R ? '<a href="#r-rev" style="--c:var(--warn)"><b>' + rvOpen + '</b>검수 미정</a>' : '') + '</div>';
-  m += card(GROUPS[0]) + card(GROUPS[1]) + card(GROUPS[2]);
+  m += card(GROUPS[0]) + card(GROUPS[4]) + card(GROUPS[1]) + card(GROUPS[2]);
   if (R) {
     var cell = function(v, note){ return v === '불필요' ? '<span class="sub">불필요</span>' : v ? '<span class="chip ok">' + esc(v) + '</span>' : '<span class="chip due">미정</span>' + (note ? '<span class="tn">' + esc(note) + '</span>' : ''); };
     m += '<div class="tcard" id="r-rev" style="--c:var(--warn)"><div class="th"><h2>검수자 배정</h2><span class="tcount">미정 ' + rvOpen + '자리 · ' + esc(md(R.date)) + ' 기준</span></div>' +
@@ -540,7 +540,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
         return '<tr><td><b>' + esc(r.cls) + '</b><span class="tn">' + esc(r.when) + '</span>' + (r.note ? '<span class="tn warnx">⚠ ' + esc(r.note) + '</span>' : '') + '</td><td>' + cell(r.cn, r.cnNote) + '</td><td>' + cell(r.jp, r.jpNote) + '</td></tr>';
       }).join('') + '</table></div></div>';
   }
-  m += GROUPS.slice(3).map(card).join('');
+  m += [GROUPS[3], GROUPS[5]].map(card).join('');
   m += '<details class="fold"><summary>예전 자료 · 진행 클래스 · 다가오는 일정 · 누락 점검</summary>';
   if (W.projects) {
     var PJ = W.projects.items.slice().sort(function(a,b){ return (a.lecture || a.open || '9') < (b.lecture || b.open || '9') ? -1 : 1; });
