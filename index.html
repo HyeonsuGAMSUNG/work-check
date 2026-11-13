@@ -246,7 +246,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
   <section id="s-plan"></section>
 </main>
 <div class="copybar" id="copybar"><div class="in"><span id="copymsg"></span><button id="copybtn" type="button">완료 목록 복사</button></div><div class="in" style="display:block"><textarea id="copybox" class="copybox" readonly hidden aria-label="복사할 완료 목록"></textarea></div></div>
-<script src="data.js?v=1794380000"></script>
+<script src="data.js?v=1794560000"></script>
 <script>
 (function(){
   var W = window.WORK, DAYS = ['일','월','화','수','목','금','토'];
@@ -627,17 +627,18 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
   var chChip = function(ch){ return ch.split(' + ').map(function(x){ return '<span class="chip ' + (CHC[x] || '') + '">' + esc(x) + '</span>'; }).join(' '); };
   // 클래스: 국가 구분 없이 마감이 급한 순(D-n 오름차순)으로 한 줄. 국가는 칩으로 표시하고 위 칩으로 거른다. 마감 = 노션 1주차(또는 판매 페이지 마감일)
   var MKS = ['한중일','한국','중국','일본'], MKC = {'한중일':'var(--bad)','한국':'var(--good)','중국':'var(--warn)','일본':'var(--accent)'};
-  var stOf = function(c){ return dd(c.deadline) < 0 ? 'closed' : c.status === 'upcoming' ? 'upcoming' : 'open'; };
+  // 마감일이 없는 것(공모전·쿠폰 같은 상시 홍보)은 'nodate'로 따로 맨 아래에 둔다
+  var stOf = function(c){ return !c.deadline ? 'nodate' : dd(c.deadline) < 0 ? 'closed' : c.status === 'upcoming' ? 'upcoming' : 'open'; };
   var mkChip = function(m){ return '<span class="chip"><span class="mdot" style="background:' + (MKC[m] || 'var(--muted-2)') + '"></span>' + esc(m) + '</span>'; };
   var clsRow = function(c){
     var n = dd(c.deadline), st = stOf(c), urgent = st !== 'closed' && n <= 3;
-    var badge = st === 'closed' ? '마감' : n === 0 ? '오늘 마감' : 'D-' + n;
+    var badge = st === 'nodate' ? '상시' : st === 'closed' ? '마감' : n === 0 ? '오늘 마감' : 'D-' + n;
     return '<div class="item" data-mk="' + esc(c.mk) + '" style="align-items:center;box-shadow:inset 4px 0 0 ' + (MKC[c.mk] || 'var(--border)') + (st === 'closed' ? ';opacity:.6' : '') + '"><div class="body"><div class="t"><b>' + esc(c.name) + '</b></div>' +
       '<div class="note">' + esc(c.note) + '</div><div class="chips">' + mkChip(c.mk) + (st === 'upcoming' ? '<span class="chip old">오픈 예정</span>' : '') + '<span class="chip' + (c.kind === '무료특강' ? ' t-tr' : '') + '">' + esc(c.kind) + '</span>' + (c.open ? '<span class="chip">오픈 ' + md(c.open).split(' ')[0] + '</span>' : '') + '</div></div>' +
-      '<div class="dbox"><div class="dn' + (urgent ? ' hot' : st !== 'closed' && n <= 7 ? ' warm' : '') + '">' + badge + '</div><span class="sub">마감 ' + md(c.deadline) + '</span></div></div>';
+      '<div class="dbox"><div class="dn' + (urgent ? ' hot' : st !== 'closed' && n <= 7 ? ' warm' : '') + '">' + badge + '</div><span class="sub">' + (c.deadline ? '마감 ' + md(c.deadline) : '마감일 미정') + '</span></div></div>';
   };
   var sorted = PR.classes.slice().sort(function(a,b){ return a.deadline < b.deadline ? -1 : a.deadline > b.deadline ? 1 : 0; });
-  var live = sorted.filter(function(c){ return stOf(c) !== 'closed'; }), closed = sorted.filter(function(c){ return stOf(c) === 'closed'; }).reverse();
+  var live = sorted.filter(function(c){ var s = stOf(c); return s === 'open' || s === 'upcoming'; }), nodate = sorted.filter(function(c){ return stOf(c) === 'nodate'; }), closed = sorted.filter(function(c){ return stOf(c) === 'closed'; }).reverse();
   // 급한 정도 구간: 3일 이내 / 7일 이내 / 그 이후
   var BANDS = [['D-3 이내 · 지금 홍보', 0, 3, 'due'], ['D-7 이내 · 이번 주', 4, 7, 'old'], ['D-8 이후', 8, 1e9, '']];
   var pr = '<h2>' + dot('var(--bad)') + '클래스 마감 · 급한 순 (1주차 = 마감)</h2>' +
@@ -645,7 +646,8 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
     '<div class="list" id="clsList" style="margin-top:10px">' + BANDS.map(function(b){
       var xs = live.filter(function(c){ var n = dd(c.deadline); return n >= b[1] && n <= b[2]; });
       return xs.length ? '<div class="day-h" data-band><span class="chip ' + b[3] + '">' + b[0] + '</span> <span class="bn">' + xs.length + '</span>개</div>' + xs.map(clsRow).join('') : '';
-    }).join('') + '<div class="empty" id="clsEmpty" hidden>이 국가는 모집 중·예정 클래스가 없어요.</div></div>' +
+    }).join('') + (nodate.length ? '<div class="day-h" data-band><span class="chip">마감일 미정 · 상시 홍보</span> <span class="bn">' + nodate.length + '</span>개</div>' + nodate.map(clsRow).join('') : '') +
+    '<div class="empty" id="clsEmpty" hidden>이 국가는 모집 중·예정 클래스가 없어요.</div></div>' +
     (closed.length ? '<details class="fold" style="margin-top:10px"><summary>마감 · 수업 진행 중 ' + closed.length + '개</summary><div class="list" style="margin-top:8px">' + closed.map(clsRow).join('') + '</div></details>' : '') +
     '<p class="hint">' + esc(PR.source) + ' · 중국·일본 초급반은 판매 페이지 마감일 · ' + esc(PR.asOf) + ' 조회. 오픈 예정은 오픈일을 알려 주시면 넣겠습니다.</p>';
   var EV = {}; PR.events.forEach(function(e){ (EV[e.date] = EV[e.date] || []).push(e.title); });
@@ -655,7 +657,7 @@ table.rv td:not(:first-child),table.rv th:not(:first-child){width:92px}
     var xs = weeks[k], lastD = xs[xs.length - 1].date, past = dd(lastD) < 0, cur = dd(k) <= 0 && dd(lastD) >= 0;
     var body = '<div class="list">' + xs.map(function(x){
       var c = PC[x.cls], n = dd(x.date), cd = Math.round((new Date(c.deadline + 'T00:00:00') - new Date(x.date + 'T00:00:00')) / 864e5);
-      return '<div class="item"' + (n < 0 ? ' style="opacity:.55"' : n === 0 ? ' style="background:var(--warn-bg)"' : '') + '><div class="body"><div class="t">' + md(x.date) + (n === 0 ? ' · 오늘' : '') + ' — ' + esc(c.name) + ' <span class="sub">(마감 ' + (cd > 0 ? 'D-' + cd : cd === 0 ? '당일' : '지남') + ')</span></div>' +
+      return '<div class="item"' + (n < 0 ? ' style="opacity:.55"' : n === 0 ? ' style="background:var(--warn-bg)"' : '') + '><div class="body"><div class="t">' + md(x.date) + (n === 0 ? ' · 오늘' : '') + ' — ' + esc(c.name) + ' <span class="sub">(마감 ' + (!c.deadline ? '미정' : cd > 0 ? 'D-' + cd : cd === 0 ? '당일' : '지남') + ')</span></div>' +
         '<div class="note">' + esc(x.what) + '</div><div class="chips">' + chChip(x.channel) + (EV[x.date] ? EV[x.date].map(function(e){ return '<span class="chip">📅 ' + esc(e) + '</span>'; }).join('') : '') + '</div></div></div>';
     }).join('') + '</div>';
     var label = md(k).split(' ')[0] + ' 주' + (cur ? ' · 이번 주' : '');
